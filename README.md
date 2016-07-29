@@ -51,7 +51,10 @@ For this API...
 2-2. When you call this method, you will give arguments for this method, and each value will be mapped for each parameter
 
 So, if you call this method, the RestTemplate will get URL to call of below.
-- *http://some.host.name.com/this/is/a/sample/path?p1=your input1&p2=your input2&p3=your input3* 
+
+	*http://some.host.name.com/this/is/a/sample/path?p1=your input1&p2=your input2&p3=your input3* 
+
+See the sample.
 
 	@RestAPIRepository("someRestTemplateName")
 	public interface SomeAPIClient {
