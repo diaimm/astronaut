@@ -26,7 +26,7 @@ Annotation based configurations are adopted, just like you make a repository wit
 With some annotations prepared, you can configure Rest API information.
 	
 ##### @RestAPIRepository
-@RestAPIRepository is an annotation that is indicating this interface must be build up as and Rest-API Client.
+@RestAPIRepository is an annotation that is indicating this interface must be build up as a Rest-API Client.
 As a *value* attribute, it requires the name of RestTemplate bean.
 
 The Configurer(you can see the details below) will make a proxied instance and will register this instance into the ApplicationContext so that you can use it with any way Spring supporting (for example, @Autowired).
@@ -36,8 +36,8 @@ The Configurer(you can see the details below) will make a proxied instance and w
 	}
 	
 ##### Mapping for the API parameters.
-The first sample is simple mapping with and API of url '/this/is/a/sample/path'.
-This API will return some response and we I will assume this json response can unmarshalled to a class name SampleResponse.
+The first sample is a simple mapping for an API with the url '/this/is/a/sample/path'.
+This API will return some response and we will assume this json response can unmarshalled to a class named SampleResponse.
 
 This API requires four parameters,
 1. p1 as an Integer
