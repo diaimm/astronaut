@@ -45,10 +45,10 @@ This API requires four parameters,
 3. p3 as a Long
 
 For this API...
-1. We use *@GetForObject*, and this requires a value for URL you have to use.
-2. We use *@Param* annotations to map the arguments of this method to the parameters of the API.
-2-1. The value of each *@Param* will be used as each parameter name.
-2-2. When you call this method, you will give arguments for this method, and each value will be mapped for each parameter
+* We use *@GetForObject*, and this requires a value for URL you have to use.
+* We use *@Param* annotations to map the arguments of this method to the parameters of the API.
+- The value of each *@Param* will be used as each parameter name.
+- When you call this method, you will give arguments for this method, and each value will be mapped for each parameter
 
 So, if you call this method, the RestTemplate will get URL to call of below.
 
