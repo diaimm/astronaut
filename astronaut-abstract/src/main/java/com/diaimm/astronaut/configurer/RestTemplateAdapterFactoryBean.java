@@ -26,7 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
 import com.diaimm.astronaut.configurer.RestTemplateAdapterLoader.Version;
-import com.diaimm.astronaut.configurer.annotations.mapping.APIMapping;
+import com.diaimm.astronaut.configurer.annotations.APIMapping;
 import com.diaimm.astronaut.configurer.annotations.mapping.Transaction;
 import com.diaimm.astronaut.configurer.annotations.mapping.Transaction.TransactionIdFrom;
 import com.diaimm.astronaut.configurer.annotations.method.Put;

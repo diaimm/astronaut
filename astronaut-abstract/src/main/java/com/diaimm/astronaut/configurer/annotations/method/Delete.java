@@ -9,7 +9,7 @@ import java.lang.reflect.Type;
 import com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker;
 import com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker.APICallInfoCompactizer;
 import com.diaimm.astronaut.configurer.TypeHandlingRestTemplate;
-import com.diaimm.astronaut.configurer.annotations.mapping.APIMapping;
+import com.diaimm.astronaut.configurer.annotations.APIMapping;
 import com.diaimm.astronaut.configurer.annotations.mapping.RequestURI;
 
 @Target({ ElementType.METHOD, ElementType.TYPE })

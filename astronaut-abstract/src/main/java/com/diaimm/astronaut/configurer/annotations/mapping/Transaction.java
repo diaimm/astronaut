@@ -64,7 +64,7 @@ public @interface Transaction {
 				for (int parameterIndex = 0; parameterIndex < parameterAnnotations.length; parameterIndex++) {
 					Annotation[] annotationsOfAParameter = parameterAnnotations[parameterIndex];
 					for (Annotation annotaion : annotationsOfAParameter) {
-						if (annotaion instanceof RequestBody) {
+						if (annotaion instanceof APIRequestBody) {
 							return parameterIndex;
 						}
 					}

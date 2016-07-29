@@ -18,7 +18,7 @@ import org.apache.commons.collections.SetUtils;
 
 import com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker;
 import com.diaimm.astronaut.configurer.TypeHandlingRestTemplate;
-import com.diaimm.astronaut.configurer.annotations.mapping.APIMapping;
+import com.diaimm.astronaut.configurer.annotations.APIMapping;
 import com.diaimm.astronaut.configurer.annotations.mapping.RequestURI;
 import com.google.common.base.Supplier;
 

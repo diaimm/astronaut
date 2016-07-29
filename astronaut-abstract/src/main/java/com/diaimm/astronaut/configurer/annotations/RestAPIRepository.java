@@ -1,4 +1,4 @@
-package com.diaimm.astronaut.configurer.annotations.mapping;
+package com.diaimm.astronaut.configurer.annotations;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -12,6 +12,6 @@ import org.springframework.stereotype.Component;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Component
-public @interface Adapter {
+public @interface RestAPIRepository {
 	String value() default "";
 }

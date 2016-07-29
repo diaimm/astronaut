@@ -1,4 +1,4 @@
-package com.diaimm.astronaut.configurer.annotations.mapping;
+package com.diaimm.astronaut.configurer.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

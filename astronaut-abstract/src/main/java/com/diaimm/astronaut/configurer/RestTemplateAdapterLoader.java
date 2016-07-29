@@ -17,7 +17,7 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.core.type.ClassMetadata;
 import org.springframework.core.type.classreading.MetadataReader;
 
-import com.diaimm.astronaut.configurer.annotations.mapping.Adapter;
+import com.diaimm.astronaut.configurer.annotations.RestAPIRepository;
 import com.diaimm.astronaut.configurer.transaction.RestTemplateTransactionManager;
 import com.google.common.collect.Sets;
 
@@ -97,8 +97,8 @@ public class RestTemplateAdapterLoader implements BeanFactoryPostProcessor {
 			}
 
 			private boolean isAdapterAnnotationPresent(Class<?> currentClass) {
-				if (currentClass.isAnnotationPresent(Adapter.class)) {
-					return isValueMatch(currentClass.getAnnotation(Adapter.class).value());
+				if (currentClass.isAnnotationPresent(RestAPIRepository.class)) {
+					return isValueMatch(currentClass.getAnnotation(RestAPIRepository.class).value());
 				}
 
 				return false;

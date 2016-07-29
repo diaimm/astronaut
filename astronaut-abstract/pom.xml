@@ -5,12 +5,12 @@
 	<parent>
 		<groupId>com.github.diaimm</groupId>
 		<artifactId>astronaut</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>0.0.1.RELEASE</version>
 	</parent>
 	<artifactId>astronaut-abstract</artifactId>
 	<name>astronaut-abstract</name>
 	<packaging>jar</packaging>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.1.RELEASE</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
