@@ -1,7 +1,7 @@
 # *Astronaut*
-[Spring 3.2](https://projects.spring.io/spring-framework/)
-[Sonatype Nexus Repository](https://oss.sonatype.org/#nexus-search;quick~astronaut)
-[Wiki](https://github.com/diaimm/astronaut.wiki.git)
+[[Spring 3.2](https://projects.spring.io/spring-framework/)]
+[[Sonatype Nexus Repository](https://oss.sonatype.org/#nexus-search;quick~astronaut)]
+[[Wiki](https://github.com/diaimm/astronaut.wiki.git)]
 
 Astronaut is a client builder abstraction for Rest API Call.
 
