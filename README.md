@@ -35,7 +35,7 @@ The Configurer(you can see the details below) will make a proxied instance and w
 	public interface SomeAPIClient {
 	}
 	
-##### Mapping for the API parameters.
+##### Mapping for the API parameters with @GetForObject.
 The first sample is a simple mapping for an API with the url '/this/is/a/sample/path'.
 This API will return some response and we will assume this json response can unmarshalled to a class named SampleResponse.
 
@@ -69,6 +69,51 @@ In some other class you've got the proxy instance of this, you can call like thi
 Then, it will call the url below through RestTemplate and will map the response json into SampleResponse class. 
 	
 	http://some.host.name.com/this/is/a/sample/path?p1=1&p2=test&p3=3
+	
+Available annotations for http methods 
+The annotations are made based on the methods of RestTemplate class. It means that each annotation will call matched method of RestTemplate anyhow. 
+
+	@GetForObject
+	@PostForObject
+	@HeadForHeaders
+	@OperationsForAllow
+	@PostForLocation
+	@Put
+	@PutForObject
+	@Delete
+	
+##### Mapping for the API Path variable with @PathParam. #####
+With @PathParam, you can adopt @PathVariable value of API server. In other words, if you have make a dynamic url based on the values of arguments, you can configure it as it requires.
+
+See the Sample first.
+
+	@RestAPIRepository("someRestTemplateName")
+	public interface SomeAPIClient {
+		@GetForObject(url = "/test/{p1}/ddd/{!p2}/ddd/{!p3}/{ p4 }")
+		SampleResponse sampleMethodWithPathParam(@PathParam("p1") String path1, @PathParam("p2") String path2, @PathParam("p3") String path3, @PathParam("p4") String path4);
+	}
+	
+With '{' and '}' you can declare a variable values in Request URI. An for this variables, you have to use @PathParam annotation for each bindings.
+In the sample above, for p1, p2, p3, p4, there are @PathParam annotation that has same value for each variables, and with this annotations, the Astronaut can bind real values in your real calling phase.
+
+The thing that you have remember is...
+1. the blanks between '{' and '}' will be ignored( it will be trimmed )
+2. If you use '!' before the variable than this means that "If the value for this variable is null or empty, then this path will be removed from the URL the Astronaut will make".
+
+
+For an instance, these can be possble about the sample above.
+- below will make this url : *http://some.host.com/test/a/ddd/b/ddd/c/d*
+
+	someAPIClient.sampleMethodWithPathParam("a", "b", "c", "d");
+	
+- below will make this url : *http://some.host.com/test/a/ddd/ddd/c/d*
+
+	someAPIClient.sampleMethodWithPathParam("a", null, "c", "d");
+	
+- below will make this url : *http://some.host.com/test/a/ddd/ddd/c/d*
+
+	someAPIClient.sampleMethodWithPathParam("a", "", "c", "d");	
+  
     
 
 # *The MIT License (MIT)*
