@@ -83,7 +83,7 @@ The annotations are made based on the methods of RestTemplate class. It means th
 	@Delete
 	
 ##### Mapping for the API Path variable with @PathParam. #####
-With @PathParam, you can adopt @PathVariable value of API server. In other words, if you have make a dynamic url based on the values of arguments, you can configure it as it requires.
+With @PathParam, you can adopt @PathVariable value of API server. In other words, if you have to make a dynamic url based on the values of arguments, you can configure it as it requires.
 
 See the Sample first.
 
