@@ -114,7 +114,45 @@ For an instance, these can be possble about the sample above.
 
 	someAPIClient.sampleMethodWithPathParam("a", "", "c", "d");	
   
-    
+##### Using Param DTO to cover complicated arguments of a method #####
+ From time to time, you meet such a case that the arguments to call an API is too complicated to list them as the arguments of a method.
+ In this case, we normally choose to use a DTO who has all the arguments required or optional.
+ 
+ For this, you can use @Form annotation and same annotations for arguments of methods in fields of that DTO.
+ 
+ This is the sample.
+ 
+		@GetForObject(url = "/test/{path1}/ddd/{ !path2}/ddd/{!path3 }/{ path4 }", dummySupplier = SampleParamSupplier.class)
+		SampleResponse sampleMethod3(@Form SampleParam param);
+		
+		public static class SampleParamSupplier implements Supplier<SampleParam> {
+			@Override
+			public SampleParam get() {
+				return new SampleParam(new StringBuilder("/test/{p1}/ddd/ddd/{ p4 } }"));
+			}
+		}
+		
+		public static class SampleParam {
+			@PathParam
+			private String path1 = "1";
+			@PathParam
+			private String path2 = "2";
+			@PathParam
+			private String path3 = "3";
+			@PathParam
+			private String path4 = "4";
+			@Param
+			private String value5 = "5";
+			@Param
+			private String value6 = "6";
+			@Param
+			private String value7 = "7";
+		}
+ 
+In the sample, above, you can see @PathParam and @Param are used for fields in DTO that must be given the method.
+And one more thing is *SampleParamSupplier* class. This class is implementing *Supplier<SampleParam>* and is being given as a value for *dummySupplier* of @GetForObject.
+
+The role of SampleParamSupplier is to make the fields and the information for mapping fixed, and by giving the *class* of SampleParamSupplier to *dummySupplier*, the Astronaut can see what it have to bind.
 
 # *The MIT License (MIT)*
 Copyright (c) 2016 diaimm
