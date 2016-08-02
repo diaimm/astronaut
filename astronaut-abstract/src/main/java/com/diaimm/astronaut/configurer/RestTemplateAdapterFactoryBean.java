@@ -16,6 +16,7 @@ import java.util.Properties;
 import javax.annotation.PostConstruct;
 
 import org.codehaus.jackson.map.DeserializationConfig.Feature;
+import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -24,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.env.Environment;
 
 import com.diaimm.astronaut.configurer.RestTemplateAdapterLoader.Version;
 import com.diaimm.astronaut.configurer.annotations.APIMapping;
@@ -38,6 +40,8 @@ import com.google.common.collect.Maps;
 public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
 	@Autowired
 	private ApplicationContext applicationContext;
+	@Autowired
+	private Environment environment;
 	private RestTemplateRepositoryInvocationHandler invocationHandler;
 	private final String apiURIPropertyKey;
 	private final Version version;
@@ -72,17 +76,21 @@ public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
 
 	@PostConstruct
 	private void init() throws URISyntaxException {
-		String[] propertyKeySplitted = apiURIPropertyKey.split(":");
-		Properties properties = applicationContext.getBean(propertyKeySplitted[0], Properties.class);
-		URI apiURI = getApiURI(properties, propertyKeySplitted[1]);
-
 		TypeHandlingRestTemplate restTemplate = applicationContext.getBean(restTemplateName, TypeHandlingRestTemplate.class);
-		this.invocationHandler = new RestTemplateRepositoryInvocationHandler(restTemplate, apiURI, version.getApiPrefix(), transactionManger);
+		this.invocationHandler = new RestTemplateRepositoryInvocationHandler(restTemplate, getAPIUrl(), version.getApiPrefix(), transactionManger);
 	}
 
-	private URI getApiURI(Properties properties, String key) throws URISyntaxException {
-		if (properties.containsKey(key)) {
-			return new URI(properties.getProperty(key));
+	private URI getAPIUrl() throws URISyntaxException {
+		String[] propertyKeySplitted = apiURIPropertyKey.split(":");
+		if (propertyKeySplitted.length >= 2 && applicationContext.containsBean(propertyKeySplitted[0])) {
+			Properties properties = applicationContext.getBean(propertyKeySplitted[0], Properties.class);
+			if (properties.containsKey(propertyKeySplitted[1])) {
+				return new URI(properties.getProperty(propertyKeySplitted[1]));
+			}
+		}
+
+		if (this.environment.containsProperty(apiURIPropertyKey)) {
+			return new URI(environment.getProperty(apiURIPropertyKey));
 		}
 
 		return null;

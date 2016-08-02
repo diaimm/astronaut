@@ -61,8 +61,7 @@ public class RestTemplateAdapterLoader implements BeanFactoryPostProcessor {
 								ClassMetadata classMetadata = metadataReader.getClassMetadata();
 								Class<?> currentClass = Class.forName(classMetadata.getClassName());
 
-								BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.rootBeanDefinition(
-									RestTemplateAdapterFactoryBean.class.getName());
+								BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.rootBeanDefinition(RestTemplateAdapterFactoryBean.class.getName());
 								beanDefinitionBuilder.addConstructorArgValue(version);
 								beanDefinitionBuilder.addConstructorArgValue(apiURIPropertyKey);
 								beanDefinitionBuilder.addConstructorArgValue(restTemplateBeanName);
@@ -86,7 +85,7 @@ public class RestTemplateAdapterLoader implements BeanFactoryPostProcessor {
 				ClassMetadata classMetadata = metadataReader.getClassMetadata();
 				try {
 					Class<?> currentClass = Class.forName(classMetadata.getClassName());
-					if (isAdapterAnnotationPresent(currentClass) && currentClass.isInterface()) {
+					if (isTargetAnnotationPresent(currentClass) && currentClass.isInterface()) {
 						return true;
 					}
 				} catch (ClassNotFoundException e) {
@@ -96,7 +95,7 @@ public class RestTemplateAdapterLoader implements BeanFactoryPostProcessor {
 				return false;
 			}
 
-			private boolean isAdapterAnnotationPresent(Class<?> currentClass) {
+			private boolean isTargetAnnotationPresent(Class<?> currentClass) {
 				if (currentClass.isAnnotationPresent(RestAPIRepository.class)) {
 					return isValueMatch(currentClass.getAnnotation(RestAPIRepository.class).value());
 				}

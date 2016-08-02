@@ -2,4 +2,7 @@
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
 <properties>
     <comment>sample</comment>
+    <entry key="test">1234</entry>
+    <entry key="test1">4567</entry>
+    <entry key="apiURIPropertyKey">http://api.url.property.sample</entry>
 </properties>
