@@ -1,4 +1,5 @@
 # *Astronaut*
+[![Travis CI](https://travis-ci.org/diaimm/astronaut.svg?branch=master)](https://travis-ci.org/diaimm/astronaut "master")
 [[Spring 3.2](https://projects.spring.io/spring-framework/)]
 [[Sonatype Nexus Repository](https://oss.sonatype.org/#nexus-search;quick~astronaut)]
 [[Wiki](https://github.com/diaimm/astronaut/wiki)]
