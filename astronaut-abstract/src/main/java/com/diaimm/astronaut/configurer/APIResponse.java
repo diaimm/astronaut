@@ -83,7 +83,9 @@ public class APIResponse<T> {
 		result.code = code;
 		result.message = messgae;
 		result.apiUrl = apiUrl;
-		result.args = Arrays.copyOf(args, args.length);
+		if (args != null) {
+			result.args = Arrays.copyOf(args, args.length);
+		}
 		return result;
 	}
 

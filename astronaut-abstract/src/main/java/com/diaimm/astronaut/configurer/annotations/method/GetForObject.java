@@ -27,9 +27,7 @@ import com.google.common.base.Supplier;
 @APIMapping(handler = GetForObject.RestTemplateInvoker.class)
 public @interface GetForObject {
 	@RequestURI
-	String url()
-
-	default "";
+	String url() default "";
 
 	Class<? extends Supplier<?>> dummySupplier();
 
