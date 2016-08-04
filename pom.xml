@@ -112,7 +112,7 @@
 
 	<profiles>
 		<profile>
-			<id>local</id>
+			<id>prod</id>
 			<build>
 				<plugins>
 					<plugin>
