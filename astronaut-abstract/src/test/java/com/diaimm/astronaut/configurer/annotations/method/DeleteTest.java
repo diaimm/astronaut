@@ -9,7 +9,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.diaimm.astronaut.configurer.RestTemplateAdapterTestConfiguration;
 import com.diaimm.astronaut.configurer.repositoriesToScan.methodtest.DeleteRepository;
-import com.diaimm.astronaut.configurer.repositoriesToScan.methodtest.DeleteRepository.PathParamDTO;
+import com.diaimm.astronaut.configurer.repositoriesToScan.methodtest.PathParamDTO;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = { RestTemplateAdapterTestConfiguration.class })

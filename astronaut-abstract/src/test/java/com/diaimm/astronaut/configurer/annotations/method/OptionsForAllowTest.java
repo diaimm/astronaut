@@ -1,27 +1,30 @@
 package com.diaimm.astronaut.configurer.annotations.method;
 
+import java.util.Set;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.diaimm.astronaut.configurer.APIResponse;
 import com.diaimm.astronaut.configurer.RestTemplateAdapterTestConfiguration;
-import com.diaimm.astronaut.configurer.repositoriesToScan.methodtest.GetForObjectRepository;
-import com.diaimm.astronaut.configurer.repositoriesToScan.methodtest.GetForObjectRepository.SampleResponse;
+import com.diaimm.astronaut.configurer.repositoriesToScan.methodtest.OptionsForAllowRepository;
 import com.diaimm.astronaut.configurer.repositoriesToScan.methodtest.PathParamDTO;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = { RestTemplateAdapterTestConfiguration.class })
-public class GetForObjectTest {
+public class OptionsForAllowTest {
 	@Autowired
-	private GetForObjectRepository getForObjectRepository;
+	private OptionsForAllowRepository optionsForAllowRepository;
 
 	@Test
 	public void paramMappingTest() {
-		APIResponse<SampleResponse> response = getForObjectRepository.paramMapping("diaimm", 111);
+		APIResponse<Set<HttpMethod>> response = optionsForAllowRepository.paramMapping("diaimm", 111);
 		Assert.assertFalse(response.isSuccess());
 		Assert.assertEquals("http://api.url.property.sample/v1/sample/url/path?id={id}&age={age}", response.getApiUrl());
 		Assert.assertEquals("diaimm", response.getArgs()[0]);
@@ -31,17 +34,17 @@ public class GetForObjectTest {
 
 	@Test
 	public void pathParamMappingTest() {
-		APIResponse<SampleResponse> response = getForObjectRepository.pathParamMapping("diaimm", 111, "test");
+		APIResponse<Set<HttpMethod>> response = optionsForAllowRepository.pathParamMapping("diaimm", 111, "test");
 		Assert.assertFalse(response.isSuccess());
 		Assert.assertEquals("http://api.url.property.sample/v1/sample/{!path1}/{path2}/{path3}", response.getApiUrl());
 		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/diaimm/111/test"));
-
-		response = getForObjectRepository.pathParamMapping(null, 111, "test");
+		
+		response = optionsForAllowRepository.pathParamMapping(null, 111, "test");
 		Assert.assertFalse(response.isSuccess());
 		Assert.assertEquals("http://api.url.property.sample/v1/sample/{!path1}/{path2}/{path3}", response.getApiUrl());
 		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/111/test"));
 
-		response = getForObjectRepository.pathParamMapping(null, 111, null);
+		response = optionsForAllowRepository.pathParamMapping(null, 111, null);
 		Assert.assertFalse(response.isSuccess());
 		Assert.assertEquals("http://api.url.property.sample/v1/sample/{!path1}/{path2}/{path3}", response.getApiUrl());
 		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/111/"));
@@ -49,17 +52,17 @@ public class GetForObjectTest {
 
 	@Test
 	public void usingParamDTOTest() {
-		APIResponse<SampleResponse> response = getForObjectRepository.usingParamDTO(PathParamDTO.create("diaimm", 111, "test"));
+		APIResponse<Set<HttpMethod>> response = optionsForAllowRepository.usingParamDTO(PathParamDTO.create("diaimm", 111, "test"));
 		Assert.assertFalse(response.isSuccess());
 		Assert.assertEquals("http://api.url.property.sample/v1/sample/{!path1}/{path2}/{path3}", response.getApiUrl());
 		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/diaimm/111/test"));
 
-		response = getForObjectRepository.usingParamDTO(PathParamDTO.create(null, 111, "test"));
+		response = optionsForAllowRepository.usingParamDTO(PathParamDTO.create(null, 111, "test"));
 		Assert.assertFalse(response.isSuccess());
 		Assert.assertEquals("http://api.url.property.sample/v1/sample/{!path1}/{path2}/{path3}", response.getApiUrl());
 		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/111/test"));
 
-		response = getForObjectRepository.usingParamDTO(PathParamDTO.create(null, 111, null));
+		response = optionsForAllowRepository.usingParamDTO(PathParamDTO.create(null, 111, null));
 		Assert.assertFalse(response.isSuccess());
 		Assert.assertEquals("http://api.url.property.sample/v1/sample/{!path1}/{path2}/{path3}", response.getApiUrl());
 		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/111/"));

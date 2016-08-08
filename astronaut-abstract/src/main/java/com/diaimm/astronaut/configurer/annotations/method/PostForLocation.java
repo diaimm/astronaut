@@ -8,7 +8,6 @@ import java.lang.reflect.Type;
 import java.net.URI;
 
 import com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker;
-import com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker.APICallInfoCompactizer;
 import com.diaimm.astronaut.configurer.TypeHandlingRestTemplate;
 import com.diaimm.astronaut.configurer.annotations.APIMapping;
 import com.diaimm.astronaut.configurer.annotations.mapping.RequestURI;

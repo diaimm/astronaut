@@ -13,6 +13,8 @@ import com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker;
 import com.diaimm.astronaut.configurer.TypeHandlingRestTemplate;
 import com.diaimm.astronaut.configurer.annotations.APIMapping;
 import com.diaimm.astronaut.configurer.annotations.mapping.RequestURI;
+import com.google.common.base.Supplier;
+import com.google.common.collect.Sets;
 
 @Target({ ElementType.METHOD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
@@ -21,11 +23,20 @@ public @interface OptionsForAllow {
 	@RequestURI
 	String url() default "";
 
+	Class<? extends Supplier<?>> dummySupplier() default DummySupplierImpl.class;
+
 	class RestTemplateInvoker extends AbstractRestTemplateInvoker<OptionsForAllow> {
 		@Override
 		protected Set<HttpMethod> doInvoke(TypeHandlingRestTemplate restTemplate, APICallInfoCompactizer<OptionsForAllow> compactizer,
 			Type returnType, OptionsForAllow annotation) throws Exception {
 			return restTemplate.optionsForAllow(compactizer.getApiUrl(), compactizer.getArguments());
+		}
+	}
+
+	static class DummySupplierImpl implements Supplier<Set<HttpMethod>> {
+		@Override
+		public Set<HttpMethod> get() {
+			return Sets.newHashSet();
 		}
 	}
 }
