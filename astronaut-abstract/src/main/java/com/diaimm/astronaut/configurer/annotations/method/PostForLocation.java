@@ -21,14 +21,14 @@ public @interface PostForLocation {
 
 	class RestTemplateInvoker extends AbstractRestTemplateInvoker<PostForLocation> {
 		@Override
-		protected URI doInvoke(TypeHandlingRestTemplate restTemplate, APICallInfoCompactizer<PostForLocation> compactizer, Type returnType, PostForLocation annotation)
+		protected URI doInvoke(TypeHandlingRestTemplate restTemplate, APICallInfoCompactizer<PostForLocation> compactizer, Type returnType,
+			PostForLocation annotation)
 			throws Exception {
 			String apiUrl = compactizer.getApiUrl();
-			Object[] args = compactizer.getArguments();
-			if (args != null && args.length > 0) {
-				return restTemplate.postForLocation(apiUrl, args[0], returnType);
-			}
-			return restTemplate.postForLocation(apiUrl, null, returnType);
+			Object[] arguments = compactizer.getArguments();
+			Object postBody = compactizer.getPostBody();
+
+			return restTemplate.postForLocation((String) apiUrl, (Object) postBody, (Object[]) arguments);
 		}
 	}
 }

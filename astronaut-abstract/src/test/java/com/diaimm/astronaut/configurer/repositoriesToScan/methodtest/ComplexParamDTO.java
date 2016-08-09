@@ -18,7 +18,7 @@ public class ComplexParamDTO {
 	@Param("param3")
 	private String param3 = "param113";
 	@PostBody
-	private PostBodySample postBodySample = new PostBodySample();
+	private String postBodySample = "this is the post body";
 
 	public static class PostBodySample {
 
