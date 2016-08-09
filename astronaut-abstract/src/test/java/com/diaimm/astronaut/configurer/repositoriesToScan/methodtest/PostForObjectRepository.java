@@ -19,6 +19,9 @@ public interface PostForObjectRepository {
 	@PostForObject(url = "/sample/{!path1}/{path2}/{path3}", dummySupplier = DummySupplierImpl.class)
 	APIResponse<SampleResponse> usingParamDTO(@Form PathParamDTO paramDTO);
 
+	@PostForObject(url = "/sample/{!path1}/{path2}/{path3}", dummySupplier = DummySupplierImpl.class)
+	APIResponse<SampleResponse> usingParamDTO(@Form ComplexParamDTO paramDTO);
+
 	static class DummySupplierImpl implements Supplier<SampleResponse> {
 		@Override
 		public SampleResponse get() {

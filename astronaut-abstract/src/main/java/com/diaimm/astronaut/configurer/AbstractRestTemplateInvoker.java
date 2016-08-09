@@ -25,6 +25,7 @@ import org.springframework.util.ReflectionUtils;
 import com.diaimm.astronaut.configurer.annotations.mapping.Form;
 import com.diaimm.astronaut.configurer.annotations.mapping.Param;
 import com.diaimm.astronaut.configurer.annotations.mapping.PathParam;
+import com.diaimm.astronaut.configurer.annotations.mapping.PostBody;
 import com.diaimm.astronaut.configurer.annotations.mapping.RequestURI;
 import com.diaimm.astronaut.configurer.annotations.mapping.RequestURI.RequestURIExtractors;
 import com.diaimm.astronaut.configurer.annotations.mapping.RequestURI.RequestURIExtractors.APIMethodInvocation;
@@ -104,99 +105,37 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 
 	@Override
 	public Object invoke(TypeHandlingRestTemplate restTemplate, String apiUrl, Method method, T annotation, Object[] args) {
+		APICallInfoCompactizer<T> compactizer = null;
 		try {
+			compactizer = new APICallInfoCompactizer<T>(this, apiUrl, method, args);
 			Class<?> returnType = method.getReturnType();
 			if (APIResponse.class.isAssignableFrom(returnType)) {
 				Type genericReturnType = method.getGenericReturnType();
 				if (ParameterizedType.class.isAssignableFrom(genericReturnType.getClass())) {
 					ParameterizedType parameterizedType = (ParameterizedType) genericReturnType;
-					Object forEntity = processDoInvoke(restTemplate, apiUrl, ((ParameterizedType) parameterizedType).getActualTypeArguments()[0],
-						annotation, normalizeArguments(apiUrl, method, args));
-					return APIResponse.getInstance(apiUrl, args, forEntity);
+					Object forEntity = processDoInvoke(restTemplate, ((ParameterizedType) parameterizedType).getActualTypeArguments()[0], annotation, compactizer);
+					return APIResponse.getInstance(apiUrl, args, forEntity, compactizer);
 				}
 			}
 
-			return processDoInvoke(restTemplate, apiUrl, method.getGenericReturnType(), annotation, normalizeArguments(apiUrl, method, args));
+			return processDoInvoke(restTemplate, method.getGenericReturnType(), annotation, compactizer);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 			if (APIResponse.class.isAssignableFrom(method.getReturnType())) {
-				return APIResponse.getInstance(apiUrl, args, e);
+				return APIResponse.getInstance(apiUrl, args, e, compactizer);
 			}
 
 			throw new IllegalStateException(e);
 		}
 	}
 
-	private Object processDoInvoke(TypeHandlingRestTemplate restTemplate, String apiUrl, Type returnType, T annotation,
-		Object[] normalizedArguments) throws Exception {
-
-		APICallInfoCompactizer<T> compactizer = new APICallInfoCompactizer<T>(this, apiUrl, normalizedArguments);
+	private Object processDoInvoke(TypeHandlingRestTemplate restTemplate, Type returnType, T annotation, APICallInfoCompactizer<T> compactizer)
+		throws Exception {
 		Object result = doInvoke(restTemplate, compactizer, returnType, annotation);
 		if (result instanceof ResponseEntity) {
 			return ((ResponseEntity<?>) result).getBody();
 		}
 		return result;
-	}
-
-	public static class APICallInfoCompactizer<T extends Annotation> {
-		private final AbstractRestTemplateInvoker<T> invoker;
-		private final String sourceApiUrl;
-		private final Object[] sourceArguments;
-		private String apiUrl;
-		private Object[] arguments;
-
-		APICallInfoCompactizer(AbstractRestTemplateInvoker<T> invoker, String apiUrl, Object[] arguments) {
-			this.invoker = invoker;
-			this.sourceApiUrl = apiUrl;
-			this.sourceArguments = arguments;
-
-			this.compactize();
-		}
-
-		void compactize() {
-			String newApiUrl = this.sourceApiUrl;
-			List<Object> newArguments = Lists.newArrayList();
-			List<String> bindings = invoker.extractBindings(newApiUrl);
-			for (int index = 0; index < bindings.size(); index++) {
-				String bindingKey = bindings.get(index);
-				Object bindingValue = sourceArguments[index];
-
-				if (!bindingKey.startsWith(COMPACTIZE_TARGET_PREFIX)) {
-					newArguments.add(bindingValue);
-					continue;
-				}
-
-				if (bindingValue != null && StringUtils.isNotBlank(bindingValue.toString())) {
-					newArguments.add(bindingValue);
-					continue;
-				}
-
-				newApiUrl = newApiUrl.replaceFirst("\\{\\s*" + bindingKey + "\\s*\\}", "");
-			}
-
-			this.apiUrl = invoker.makeUrlValid(newApiUrl);
-			this.arguments = newArguments.toArray();
-		}
-
-		public AbstractRestTemplateInvoker<T> getInvoker() {
-			return this.invoker;
-		}
-
-		public String getSourceApiUrl() {
-			return this.sourceApiUrl;
-		}
-
-		public Object[] getSourceArguments() {
-			return this.sourceArguments;
-		}
-
-		public String getApiUrl() {
-			return this.apiUrl;
-		}
-
-		public Object[] getArguments() {
-			return this.arguments;
-		}
 	}
 
 	String makeUrlValid(String sample) {
@@ -373,6 +312,132 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 		}
 
 		throw new IllegalStateException("Can not find any valid RequestURI annotated value.");
+	}
+
+	public static class APICallInfoCompactizer<T extends Annotation> {
+		private final AbstractRestTemplateInvoker<T> invoker;
+		private final String sourceApiUrl;
+		private final Object[] sourceArguments;
+		private String apiUrl;
+		private Object postBody;
+		private Method method;
+		private Object[] arguments;
+
+		APICallInfoCompactizer(AbstractRestTemplateInvoker<T> invoker, String apiUrl, Method method, Object[] args)
+			throws NoSuchFieldException, IllegalAccessException, JsonGenerationException, JsonMappingException, IOException {
+			this.invoker = invoker;
+			this.sourceApiUrl = apiUrl;
+			this.method = method;
+			this.postBody = this.findPostBody(args);
+			this.sourceArguments = invoker.normalizeArguments(apiUrl, method, args);
+
+			this.compactize();
+		}
+
+		Object findPostBody(Object[] args) throws IllegalArgumentException, IllegalAccessException {
+			if (ArrayUtils.isEmpty(args)) {
+				return null;
+			}
+
+			Annotation[][] parameterAnnotations = method.getParameterAnnotations();
+			Object found = null;
+			for (int index = 0; index < args.length; index++) {
+				if (AnnotationUtilsExt.contains(parameterAnnotations[index], PostBody.class)) {
+					if (found != null) {
+						raiseMoreThan1PostBodyFoundException();
+					}
+
+					found = args[index];
+				}
+
+				Form formAnnotation = AnnotationUtilsExt.find(parameterAnnotations[index], Form.class);
+				if (formAnnotation != null) {
+					Object fromForm = this.findPostBody(args[index]);
+					if (fromForm != null) {
+						if (found != null) {
+							raiseMoreThan1PostBodyFoundException();
+						}
+
+						found = fromForm;
+					}
+				}
+			}
+
+			return found;
+		}
+
+		private void raiseMoreThan1PostBodyFoundException() {
+			throw new IllegalStateException("found more than 1 PostBody annotated fields(or params)");
+		}
+
+		Object findPostBody(Object formInstance) throws IllegalArgumentException, IllegalAccessException {
+			if (formInstance == null) {
+				return null;
+			}
+
+			Class<?> formClass = formInstance.getClass();
+			Object found = null;
+			for (Field field : formClass.getDeclaredFields()) {
+				if (field.isAnnotationPresent(PostBody.class)) {
+					if (found != null) {
+						raiseMoreThan1PostBodyFoundException();
+					}
+
+					field.setAccessible(true);
+					found = field.get(formInstance);
+				}
+			}
+			return found;
+		}
+
+		void compactize() {
+			String newApiUrl = this.sourceApiUrl;
+			List<Object> newArguments = Lists.newArrayList();
+			List<String> bindings = invoker.extractBindings(newApiUrl);
+			for (int index = 0; index < bindings.size(); index++) {
+				String bindingKey = bindings.get(index);
+				Object bindingValue = sourceArguments[index];
+
+				if (!bindingKey.startsWith(COMPACTIZE_TARGET_PREFIX)) {
+					newArguments.add(bindingValue);
+					continue;
+				}
+
+				if (bindingValue != null && StringUtils.isNotBlank(bindingValue.toString())) {
+					newArguments.add(bindingValue);
+					continue;
+				}
+
+				newApiUrl = newApiUrl.replaceFirst("\\{\\s*" + bindingKey + "\\s*\\}", "");
+			}
+
+			this.apiUrl = invoker.makeUrlValid(newApiUrl);
+			this.arguments = newArguments.toArray();
+		}
+
+		public AbstractRestTemplateInvoker<T> getInvoker() {
+			return this.invoker;
+		}
+
+		public String getSourceApiUrl() {
+			return this.sourceApiUrl;
+		}
+
+		public Object[] getSourceArguments() {
+			return this.sourceArguments;
+		}
+
+		public String getApiUrl() {
+			return this.apiUrl;
+		}
+
+		public Object[] getArguments() {
+			return this.arguments;
+		}
+
+		public Object getPostBody() {
+			return this.postBody;
+		}
 	}
 
 	protected abstract Object doInvoke(TypeHandlingRestTemplate restTemplate, APICallInfoCompactizer<T> compactizer, Type returnType, T annotation)

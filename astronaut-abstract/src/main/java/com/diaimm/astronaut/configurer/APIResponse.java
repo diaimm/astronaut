@@ -5,6 +5,8 @@ import java.util.Arrays;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
+import com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker.APICallInfoCompactizer;
+
 /**
  * <pre>
  * APIResponse<?>가 return type인 method는 exception을 throw 하지 않습니다.
@@ -26,6 +28,11 @@ public class APIResponse<T> {
 	private RestAPIException restAPIException;
 	private String apiUrl;
 	private Object[] args;
+	private APICallInfoCompactizer<?> compactizer;
+
+	public APICallInfoCompactizer<?> getCompactizer() {
+		return this.compactizer;
+	}
 
 	public int getCode() {
 		return this.code;
@@ -54,31 +61,31 @@ public class APIResponse<T> {
 	protected APIResponse() {
 	}
 
-	public static <S> APIResponse<S> getInstance(Exception e) {
-		return getInstance("", new Object[0], e);
+	public static <S> APIResponse<S> getInstance(Exception e, APICallInfoCompactizer<?> compactizer) {
+		return getInstance("", new Object[0], e, compactizer);
 	}
 
-	public static <S> APIResponse<S> getInstance(String apiUrl, Object[] args, Exception e) {
+	public static <S> APIResponse<S> getInstance(String apiUrl, Object[] args, Exception e, APICallInfoCompactizer<?> compactizer) {
 		if (e instanceof RestAPIException) {
-			return getInstance(apiUrl, args, (RestAPIException) e);
+			return getInstance(apiUrl, args, (RestAPIException) e, compactizer);
 		}
 
-		return getInstance(apiUrl, args, new RestAPIException(503, e.getMessage()));
+		return getInstance(apiUrl, args, new RestAPIException(503, e.getMessage()), compactizer);
 	}
 
-	public static <S> APIResponse<S> getInstance(String apiUrl, Object[] args, S contents) {
-		APIResponse<S> result = getInstance(apiUrl, args, 200, "SUCCESS");
+	public static <S> APIResponse<S> getInstance(String apiUrl, Object[] args, S contents, APICallInfoCompactizer<?> compactizer) {
+		APIResponse<S> result = getInstance(apiUrl, args, 200, "SUCCESS", compactizer);
 		result.contents = contents;
 		return result;
 	}
 
-	private static <S> APIResponse<S> getInstance(String apiUrl, Object[] args, RestAPIException exception) {
-		APIResponse<S> result = getInstance(apiUrl, args, exception.getStatus(), exception.getMessage());
+	private static <S> APIResponse<S> getInstance(String apiUrl, Object[] args, RestAPIException exception, APICallInfoCompactizer<?> compactizer) {
+		APIResponse<S> result = getInstance(apiUrl, args, exception.getStatus(), exception.getMessage(), compactizer);
 		result.restAPIException = exception;
 		return result;
 	}
 
-	private static <S> APIResponse<S> getInstance(String apiUrl, Object[] args, int code, String messgae) {
+	private static <S> APIResponse<S> getInstance(String apiUrl, Object[] args, int code, String messgae, APICallInfoCompactizer<?> compactizer) {
 		APIResponse<S> result = new APIResponse<S>();
 		result.code = code;
 		result.message = messgae;
@@ -86,6 +93,7 @@ public class APIResponse<T> {
 		if (args != null) {
 			result.args = Arrays.copyOf(args, args.length);
 		}
+		result.compactizer = compactizer;
 		return result;
 	}
 

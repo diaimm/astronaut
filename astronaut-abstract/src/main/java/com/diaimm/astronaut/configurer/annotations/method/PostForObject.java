@@ -28,16 +28,9 @@ public @interface PostForObject {
 			throws Exception {
 			String apiUrl = compactizer.getApiUrl();
 			Object[] arguments = compactizer.getArguments();
-			Object[] sourceArguments = compactizer.getSourceArguments();
-			if (sourceArguments == null || sourceArguments.length == 0) {
-				return restTemplate.postForObject(apiUrl, null, returnType);
-			}
+			Object postBody = compactizer.getPostBody();
 
-			if (sourceArguments.length == 1) {
-				return restTemplate.postForObject(apiUrl, sourceArguments[0], returnType);
-			}
-
-			return restTemplate.postForObject(apiUrl, sourceArguments[0], returnType, arguments);
+			return restTemplate.postForObject(apiUrl, postBody, returnType, arguments);
 		}
 	}
 }

@@ -232,8 +232,7 @@ public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
 
 			try {
 				RestTemplateInvoker<?> invokerInstance = getInvokerInstance(annotationType, apiMapping);
-				Object result = getInvokerInstance(annotationType, apiMapping).invoke(restTemplate,
-					getAPIUrl(invokerInstance, annotation, method, args),
+				Object result = getInvokerInstance(annotationType, apiMapping).invoke(restTemplate, getAPIUrl(invokerInstance, annotation, method, args),
 					method, annotation, args);
 				return result;
 			} catch (Exception e) {

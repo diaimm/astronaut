@@ -68,27 +68,19 @@ public class PostForObjectTest {
 
 	@Test
 	public void usingParamDTO2Test() {
-		APIResponse<SampleResponse> response = postForObjectRepository.usingParamDTO(createComplexParamDTO("diaimm", 111, "test"));
+		APIResponse<SampleResponse> response = postForObjectRepository.usingParamDTO(ComplexParamDTO.create("diaimm", 111, "test"));
 		Assert.assertFalse(response.isSuccess());
-		Assert.assertEquals("http://api.url.property.sample/v1/sample/{!path1}/{path2}/{path3}", response.getApiUrl());
-		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/diaimm/111/test"));
+		Assert.assertEquals("http://api.url.property.sample/v1/sample/{!path1}/{path2}/{path3}?param1={param1}&param2={param2}&param3={param3}", response.getApiUrl());
+		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/diaimm/111/test?param1=param111&param2=param112&param3=param113"));
 
-		response = postForObjectRepository.usingParamDTO(createComplexParamDTO(null, 111, "test"));
+		response = postForObjectRepository.usingParamDTO(ComplexParamDTO.create(null, 111, "test"));
 		Assert.assertFalse(response.isSuccess());
-		Assert.assertEquals("http://api.url.property.sample/v1/sample/{!path1}/{path2}/{path3}", response.getApiUrl());
-		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/111/test"));
+		Assert.assertEquals("http://api.url.property.sample/v1/sample/{!path1}/{path2}/{path3}?param1={param1}&param2={param2}&param3={param3}", response.getApiUrl());
+		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/111/test?param1=param111&param2=param112&param3=param113"));
 
-		response = postForObjectRepository.usingParamDTO(createComplexParamDTO(null, 111, null));
+		response = postForObjectRepository.usingParamDTO(ComplexParamDTO.create(null, 111, null));
 		Assert.assertFalse(response.isSuccess());
-		Assert.assertEquals("http://api.url.property.sample/v1/sample/{!path1}/{path2}/{path3}", response.getApiUrl());
-		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/111/"));
-	}
-
-	private ComplexParamDTO createComplexParamDTO(String path1, int path2, String path3) {
-		ComplexParamDTO param2 = ComplexParamDTO.create(path1, path2, path3);
-		param2.setParam1("param111");
-		param2.setParam2("param112");
-		param2.setParam3("param113");
-		return param2;
+		Assert.assertEquals("http://api.url.property.sample/v1/sample/{!path1}/{path2}/{path3}?param1={param1}&param2={param2}&param3={param3}", response.getApiUrl());
+		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/111/?param1=param111&param2=param112&param3=param113"));
 	}
 }
