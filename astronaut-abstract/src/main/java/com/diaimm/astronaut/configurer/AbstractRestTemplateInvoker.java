@@ -20,6 +20,7 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.ReflectionUtils;
 
 import com.diaimm.astronaut.configurer.annotations.mapping.Form;
 import com.diaimm.astronaut.configurer.annotations.mapping.Param;
@@ -294,7 +295,7 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 		for (String fieldName : parameterNames) {
 			fieldName = getActualFieldName(fieldName);
 
-			Field field = formClass.getDeclaredField(fieldName);
+			Field field = ReflectionUtils.findField(formClass, fieldName);
 			if (field.isAnnotationPresent(RequestURI.class)) {
 				continue;
 			}

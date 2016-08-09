@@ -10,6 +10,7 @@ import com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker;
 import com.diaimm.astronaut.configurer.TypeHandlingRestTemplate;
 import com.diaimm.astronaut.configurer.annotations.APIMapping;
 import com.diaimm.astronaut.configurer.annotations.mapping.RequestURI;
+import com.google.common.base.Supplier;
 
 @Target({ ElementType.METHOD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
@@ -17,6 +18,8 @@ import com.diaimm.astronaut.configurer.annotations.mapping.RequestURI;
 public @interface PostForObject {
 	@RequestURI
 	String url() default "";
+
+	Class<? extends Supplier<?>> dummySupplier();
 
 	class RestTemplateInvoker extends AbstractRestTemplateInvoker<PostForObject> {
 		@Override
