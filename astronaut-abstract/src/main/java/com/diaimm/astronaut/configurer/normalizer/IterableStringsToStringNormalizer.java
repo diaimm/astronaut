@@ -5,7 +5,7 @@ import org.apache.commons.lang.StringUtils;
 import com.diaimm.astronaut.configurer.APIArgumentNormalizer;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.collect.Iterables;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Lists;
 
 public abstract class IterableStringsToStringNormalizer implements APIArgumentNormalizer<Object> {
@@ -27,7 +27,8 @@ public abstract class IterableStringsToStringNormalizer implements APIArgumentNo
 		if (value.getClass().isArray()) {
 			return getTrimmedIterable(Lists.newArrayList((Object[]) value));
 		}
-		return Iterables.transform((Iterable<?>) value, new Function<Object, String>() {
+
+		return FluentIterable.from((Iterable<?>) value).transform(new Function<Object, String>() {
 			@Override
 			public String apply(Object input) {
 				if (input == null) {

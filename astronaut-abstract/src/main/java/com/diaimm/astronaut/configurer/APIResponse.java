@@ -9,12 +9,12 @@ import com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker.APICallInfoCo
 
 /**
  * <pre>
- * APIResponse<?>가 return type인 method는 exception을 throw 하지 않습니다.
+ * When the return type of a method is APIResponse<?>, it doesn't throw any exceptions. 
  * 
- * api call에 대한 성공 여부 판단은 isSuccess() 메소드로 확인하실 수 있고, 
- * 1. 실패시의 exception내용을 받고 싶으면 getRestApiClientException()를 호출하시거나 getMessage() 등을 확인하실 수 있습니다.
- * 2. 발생한 exception을 그대로 위로 throw 하시려면 #orThrow()를
- * 3. exception시 default 값을 리턴하고 싶으시면 #or({value})를 호출 하실 수 있습니다.
+ * You can check if the call has been successed with {@link #isSuccess()}, and 
+ * 1. if it has failed, you can get the exception information through {@link #getRestApiClientException()} or get the message through {@link #getMessage()}.
+ * 2. if you just throw the same exception occurred inside the module just call {@link #orThrow()}.
+ * 3. if you have a default value for the failures the use {@link #or(defaultValue)}
  * </pre>
  * 
  * @author diaimm

@@ -17,8 +17,6 @@ import com.diaimm.astronaut.configurer.transaction.RestTemplateTransactionObject
 public class RestTemplateTransactionManager extends AbstractPlatformTransactionManager {
 	private static Logger log = LoggerFactory.getLogger(RestTemplateTransactionManager.class);
 	private static final long serialVersionUID = -143377730767700027L;
-	@Autowired
-	private ApplicationContext applicationContext;
 	private ThreadLocal<RestTemplateTransactionObject> transactionObject = new ThreadLocal<RestTemplateTransactionObject>();
 
 	public RestTemplateTransactionObject getTransactionObject() {
