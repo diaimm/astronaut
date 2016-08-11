@@ -15,8 +15,6 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +27,8 @@ import com.diaimm.astronaut.configurer.annotations.mapping.PostBody;
 import com.diaimm.astronaut.configurer.annotations.mapping.RequestURI;
 import com.diaimm.astronaut.configurer.annotations.mapping.RequestURI.RequestURIExtractors;
 import com.diaimm.astronaut.configurer.annotations.mapping.RequestURI.RequestURIExtractors.APIMethodInvocation;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -48,24 +48,34 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 	public String extractAPIUrl(T annotation, Method method, Object[] methodArguemtns) {
 		StringBuffer baseUrl = new StringBuffer(this.getBaseUrl(annotation, method, methodArguemtns));
 
-		List<String> parameterNames = getParamAnnotatedParameters(method);
-		for (String paramterName : parameterNames) {
+		List<ParamConfig> parameterNames = getParamAnnotatedParameters(method);
+		for (ParamConfig paramterName : parameterNames) {
 			if (baseUrl.indexOf("?") == -1) {
 				baseUrl.append("?");
 			} else {
 				baseUrl.append("&");
 			}
 
-			baseUrl.append(paramterName).append("={").append(paramterName).append("}");
+			baseUrl.append(paramterName.paramKey).append("={").append(paramterName.fieldName).append("}");
 		}
 		return baseUrl.toString();
 	}
 
-	private List<String> getParamAnnotatedParameters(Method methodIn) {
+	private static class ParamConfig {
+		private String paramKey;
+		private String fieldName;
+
+		public ParamConfig(String paramKey, String fieldName) {
+			this.paramKey = paramKey;
+			this.fieldName = fieldName;
+		}
+	}
+
+	private List<ParamConfig> getParamAnnotatedParameters(Method methodIn) {
 		Class<?>[] parameterTypes = methodIn.getParameterTypes();
 		Annotation[][] parameterAnnotations = methodIn.getParameterAnnotations();
 
-		List<String> result = Lists.newArrayList();
+		List<ParamConfig> result = Lists.newArrayList();
 		for (int index = 0; index < parameterTypes.length; index++) {
 			Class<?> parameterType = parameterTypes[index];
 			Annotation[] parameterAnnotation = parameterAnnotations[index];
@@ -83,24 +93,28 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 		return result;
 	}
 
-	private List<String> processParamAnnotatedArgumentFromForm(Class<?> parameterType, Annotation[] annotations) {
-		List<String> result = Lists.newArrayList();
+	private List<ParamConfig> processParamAnnotatedArgumentFromForm(Class<?> parameterType, Annotation[] annotations) {
+		List<ParamConfig> result = Lists.newArrayList();
 
 		for (Field field : parameterType.getDeclaredFields()) {
-			if (field.isAnnotationPresent(Param.class)) {
-				result.add(field.getName());
+			if (!field.isAnnotationPresent(Param.class)) {
+				continue;
 			}
+
+			Param paramAnnotation = field.getAnnotation(Param.class);
+			String configuredName = paramAnnotation.value();
+			result.add(new ParamConfig(StringUtils.isBlank(configuredName) ? field.getName() : configuredName.trim(), field.getName()));
 		}
 
 		return result;
 	}
 
-	private void processParamAnnotatedArgument(List<String> result, Annotation[] annotations) {
+	private void processParamAnnotatedArgument(List<ParamConfig> result, Annotation[] annotations) {
 		Param param = AnnotationUtilsExt.find(annotations, Param.class);
 		if (param == null) {
 			return;
 		}
-		result.add(param.value());
+		result.add(new ParamConfig(param.value(), param.value()));
 	}
 
 	@Override
@@ -113,7 +127,8 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 				Type genericReturnType = method.getGenericReturnType();
 				if (ParameterizedType.class.isAssignableFrom(genericReturnType.getClass())) {
 					ParameterizedType parameterizedType = (ParameterizedType) genericReturnType;
-					Object forEntity = processDoInvoke(restTemplate, ((ParameterizedType) parameterizedType).getActualTypeArguments()[0], annotation, compactizer);
+					Object forEntity = processDoInvoke(restTemplate, ((ParameterizedType) parameterizedType).getActualTypeArguments()[0], annotation,
+						compactizer);
 					return APIResponse.getInstance(apiUrl, args, forEntity, compactizer);
 				}
 			}

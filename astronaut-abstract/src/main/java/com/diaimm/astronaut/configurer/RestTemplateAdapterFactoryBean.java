@@ -15,9 +15,6 @@ import java.util.Properties;
 
 import javax.annotation.PostConstruct;
 
-import org.codehaus.jackson.map.DeserializationConfig.Feature;
-import org.apache.commons.lang.StringUtils;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.slf4j.Logger;
@@ -35,6 +32,8 @@ import com.diaimm.astronaut.configurer.annotations.method.Put;
 import com.diaimm.astronaut.configurer.transaction.RestTemplateTransactionManager;
 import com.diaimm.astronaut.configurer.transaction.RestTemplateTransactionObject;
 import com.diaimm.astronaut.configurer.transaction.RestTemplateTransactionObject.TransactionCommand;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
 
 public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
@@ -106,7 +105,7 @@ public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
 		private RestTemplateTransactionManager transactionManger;
 		private static ObjectMapper mapper = new ObjectMapper();
 		{
-			mapper.disable(Feature.FAIL_ON_UNKNOWN_PROPERTIES);
+			mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 		}
 
 		private RestTemplateRepositoryInvocationHandler(TypeHandlingRestTemplate restTemplate, URI apiURI, String pathPrefix,
