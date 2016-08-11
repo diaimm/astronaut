@@ -1,5 +1,6 @@
 package com.diaimm.astronaut.facebook.repositories;
 
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
@@ -10,8 +11,8 @@ import com.diaimm.astronaut.configurer.annotations.RestAPIRepository;
 import com.diaimm.astronaut.configurer.annotations.mapping.Form;
 import com.diaimm.astronaut.configurer.annotations.mapping.Param;
 import com.diaimm.astronaut.configurer.annotations.method.GetForObject;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Supplier;
-import com.google.common.collect.Lists;
 
 @RestAPIRepository("facebook2.7")
 public interface FaceBookMeRepository {
@@ -46,6 +47,7 @@ public interface FaceBookMeRepository {
 	public static class Data {
 		private String id;
 		private String message;
+		private Date createdTime;
 
 		public void setId(String id) {
 			this.id = id;
@@ -53,6 +55,11 @@ public interface FaceBookMeRepository {
 
 		public void setMessage(String message) {
 			this.message = message;
+		}
+
+		@JsonProperty(value = "created_time")
+		public void setCreatedTime(Date createdTime) {
+			this.createdTime = createdTime;
 		}
 
 		@Override
