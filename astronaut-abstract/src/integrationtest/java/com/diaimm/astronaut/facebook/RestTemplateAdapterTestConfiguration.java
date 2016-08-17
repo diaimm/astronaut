@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.http.Header;
-import org.apache.http.message.BasicHeader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
@@ -20,7 +19,7 @@ import com.diaimm.astronaut.configurer.RestTemplateAdapterLoader;
 import com.diaimm.astronaut.configurer.RestTemplateAdapterLoader.Version;
 import com.diaimm.astronaut.configurer.TypeHandlingRestTemplate;
 import com.diaimm.astronaut.configurer.transaction.RestTemplateTransactionManager;
-import com.diaimm.astronaut.facebook.repositories.FaceBookMeBase;
+import com.diaimm.astronaut.facebook.repositories.FaceBookRepositoriesScanningBase;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
@@ -46,7 +45,7 @@ public class RestTemplateAdapterTestConfiguration {
 			public String getApiPrefix() {
 				return "/v2.7";
 			}
-		}, "apiURIPropertyKey", "facebook2.7", "sampleRestTemplate", restTemplateTransactionManager, FaceBookMeBase.class);
+		}, "apiURIPropertyKey", "facebook2.7", "sampleRestTemplate", restTemplateTransactionManager, FaceBookRepositoriesScanningBase.class);
 	}
 
 	@Bean
@@ -57,9 +56,8 @@ public class RestTemplateAdapterTestConfiguration {
 	@Bean
 	public TypeHandlingRestTemplate sampleRestTemplate() {
 		List<Header> defaultHeaders = Lists.newArrayList();
-		defaultHeaders.add(new BasicHeader("user-agent",
-			"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.82 Safari/537.36"));
-		defaultHeaders.add(new BasicHeader("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"));
+//		defaultHeaders.add(new BasicHeader("user-agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.82 Safari/537.36"));
+//		defaultHeaders.add(new BasicHeader("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"));
 
 		DefaultTypeHandlingRestTemplateImpl result = new DefaultTypeHandlingRestTemplateImpl(300, 5000, 100, 10, defaultHeaders);
 		result.setMessageConverters(httpMessageConverters());

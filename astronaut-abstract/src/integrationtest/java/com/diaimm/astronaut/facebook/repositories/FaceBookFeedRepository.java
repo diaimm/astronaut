@@ -15,23 +15,23 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Supplier;
 
 @RestAPIRepository("facebook2.7")
-public interface FaceBookMeRepository {
-	@GetForObject(url="/page-id/feed", dummySupplier = MeDummySupplier.class)
-	public APIResponse<Me> get(@Form MeParam meParam);
+public interface FaceBookFeedRepository {
+	@GetForObject(url="/page-id/feed", dummySupplier = FaceBookFeedDummySupplier.class)
+	public APIResponse<FaceBookFeed> get(@Form FaceBookFeedParam meParam);
 
-	public static class MeDummySupplier implements Supplier<Me> {
+	public static class FaceBookFeedDummySupplier implements Supplier<FaceBookFeed> {
 		@Override
-		public Me get() {
+		public FaceBookFeed get() {
 			return null;
 		}
 	}
 
-	public static class MeParam {
+	public static class FaceBookFeedParam {
 		@Param("access_token")
 		private String accessToken = "293116111054634|7f58412c725ec949051a579ba03d867f";
 	}
 
-	public static class Me {
+	public static class FaceBookFeed {
 		private List<Data> data;
 
 		public void setData(List<Data> datas) {
