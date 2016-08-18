@@ -4,8 +4,6 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.transaction.HeuristicCompletionException;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionException;
@@ -40,7 +38,6 @@ public class RestTemplateTransactionManager extends AbstractPlatformTransactionM
 		executeTransactionCommandsAll(this.transactionObject.get().getCommits());
 		log.debug("commit : {} ", this.transactionObject.get());
 		this.transactionObject.remove();
-
 	}
 
 	@Override
@@ -52,15 +49,18 @@ public class RestTemplateTransactionManager extends AbstractPlatformTransactionM
 
 	private void executeTransactionCommandsAll(List<TransactionCommand> commands) {
 		Exception hasException = null;
-		for (TransactionCommand command : commands) {
+		
+		while(commands.size() > 0){
 			try {
-				command.execute();
+				commands.remove(0).execute();
 			} catch (Exception e) {
 				// all commands must be called
 				log.error(e.getMessage(), e);
 				hasException = e;
 			}
+
 		}
+		
 		if (hasException != null) {
 			throw new HeuristicCompletionException(HeuristicCompletionException.STATE_MIXED, hasException);
 		}

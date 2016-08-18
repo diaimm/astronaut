@@ -16,7 +16,6 @@ import java.util.Properties;
 import javax.annotation.PostConstruct;
 
 import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
@@ -34,6 +33,7 @@ import com.diaimm.astronaut.configurer.transaction.RestTemplateTransactionObject
 import com.diaimm.astronaut.configurer.transaction.RestTemplateTransactionObject.TransactionCommand;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 
 public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
@@ -104,6 +104,7 @@ public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
 		private String apiURLPrefix;
 		private RestTemplateTransactionManager transactionManger;
 		private static ObjectMapper mapper = new ObjectMapper();
+
 		{
 			mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 		}
@@ -118,69 +119,72 @@ public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
 		@Override
 		public Object invoke(Object instance, Method method, Object[] args) {
 			Annotation[] annotations = method.getAnnotations();
-			Transaction transaction = getTransactionAnnotaion(annotations);
+			Optional<Transaction> transaction = getTransactionAnnotaion(annotations);
 
 			for (Annotation annotation : annotations) {
-				if (annotation.annotationType().isAnnotationPresent(APIMapping.class)) {
-					Object result = null;
-					RuntimeException exception = null;
-					try {
-						result = addCallInfoForTransaction(transaction, method, annotation, args, invokeAPICall(method, annotation, args));
+				if (!annotation.annotationType().isAnnotationPresent(APIMapping.class)) {
+					continue;
+				}
 
-						return result;
-					} catch (RuntimeException e) {
-						exception = e;
-						throw e;
-					} finally {
-						endTransactionIfNeed(transaction, method, annotation, args, result, exception);
-					}
+				Object result = null;
+				RuntimeException exception = null;
+				Optional<TransactionCommands> transactionCommands = makeTransactionCommands(transaction, method, args, annotation);
+				try {
+					result = invokeAPICall(method, annotation, args);
+					result = addCallInfoForTransaction(transactionCommands, result);
+					return result;
+				} catch (RuntimeException e) {
+					exception = e;
+					throw e;
+				} finally {
+					endTransactionIfNeed(transactionCommands, result, exception);
 				}
 			}
 
 			return null;
 		}
 
-		private Object addCallInfoForTransaction(final Transaction transaction, final Method method, final Annotation annotation,
-			final Object[] args, final Object result) {
-			if (transaction == null) {
-				return result;
+		private Optional<TransactionCommands> makeTransactionCommands(Optional<Transaction> transaction, Method method, Object[] args,
+			Annotation annotation) {
+			Optional<TransactionCommands> transactionCommands = Optional.absent();
+			if (transaction.isPresent()) {
+				transactionCommands = Optional.of(new TransactionCommands(this, transaction.get(), method, annotation, args));
+			}
+			return transactionCommands;
+		}
+
+		private Object addCallInfoForTransaction(Optional<TransactionCommands> commands, final Object apiCallResult) {
+			if (!commands.isPresent()) {
+				return apiCallResult;
 			}
 
 			RestTemplateTransactionObject transactionObject = this.transactionManger.getTransactionObject();
 			if (transactionObject == null) {
-				return result;
+				return apiCallResult;
 			}
 
-			transactionObject.pushToCallStack(new TransactionCommand() {
-				@Override
-				public void execute() {
-					callCommitApi(transaction, method, annotation, args, result);
-				}
-			}, new TransactionCommand() {
-				@Override
-				public void execute() {
-					callRollbackApi(transaction, method, annotation, args, result);
-				}
-			});
-
-			return result;
+			transactionObject.pushToCallStack(commands.get().commit(apiCallResult), commands.get().rollback(apiCallResult));
+			return apiCallResult;
 		}
 
-		private void endTransactionIfNeed(Transaction transaction, Method method, Annotation annotation, Object[] args, Object result,
-			RuntimeException exception) {
-			if (transaction == null) {
+		private void endTransactionIfNeed(Optional<TransactionCommands> transactionCommands, Object result, RuntimeException exception) {
+			if (!transactionCommands.isPresent()) {
 				return;
 			}
 
 			RestTemplateTransactionObject transactionObject = this.transactionManger.getTransactionObject();
+			// if transactionObject is not null, commits or rollbacks will happen in transaction manager.
 			if (transactionObject != null) {
 				return;
 			}
 
-			// @Transactional 없이 실행된 상황
+			handleSingleTransaction(transactionCommands, result, exception);
+		}
+
+		private void handleSingleTransaction(Optional<TransactionCommands> transactionCommands, Object result, RuntimeException exception) {
 			if (exception != null) {
 				try {
-					callRollbackApi(transaction, method, annotation, args, result);
+					transactionCommands.get().rollback(result).execute();
 				} catch (Exception e) {
 					log.error(e.getMessage(), e);
 				}
@@ -189,40 +193,20 @@ public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
 			}
 
 			try {
-				callCommitApi(transaction, method, annotation, args, result);
+				transactionCommands.get().commit(result).execute();
 			} catch (Exception e) {
 				log.error(e.getMessage(), e);
 			}
 		}
 
-		private void callCommitApi(final Transaction transaction, final Method method,
-			final Annotation annotation, final Object[] args, Object result) {
-			callTransactionFinishAPI(transaction, method, args, result, transaction.commit());
-		}
-
-		private void callRollbackApi(final Transaction transaction, final Method method, final Annotation annotation, final Object[] args,
-			Object result) {
-			callTransactionFinishAPI(transaction, method, args, result, transaction.rollback());
-		}
-
-		private void callTransactionFinishAPI(final Transaction transaction, final Method method, final Object[] args, Object result, String apiURI) {
-			TransactionIdFrom transactionIdFrom = transaction.transactionIdFrom();
-			Object extractTransactionInfo = transactionIdFrom.extractTransactionInfo(transaction.transactionId(), method, args, result);
-			Put.RestTemplateInvoker restTemplateInvoker = new Put.RestTemplateInvoker();
-
-			String apiFullURL = apiURLPrefix + apiURI;
-			restTemplateInvoker.doInvoke(restTemplate, apiFullURL, extractTransactionInfo);
-			log.debug("finishing transaction... with {}", apiFullURL);
-		}
-
-		private Transaction getTransactionAnnotaion(Annotation[] annotations) {
-			Transaction transaction = null;
+		private Optional<Transaction> getTransactionAnnotaion(Annotation[] annotations) {
 			for (Annotation annotation : annotations) {
 				if (annotation instanceof Transaction) {
-					transaction = (Transaction) annotation;
+					return Optional.of((Transaction) annotation);
 				}
 			}
-			return transaction;
+
+			return Optional.absent();
 		}
 
 		private Object invokeAPICall(Method method, Annotation annotation, Object[] args) {
@@ -230,10 +214,9 @@ public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
 			APIMapping apiMapping = annotationType.getAnnotation(APIMapping.class);
 
 			try {
-				RestTemplateInvoker<?> invokerInstance = getInvokerInstance(annotationType, apiMapping);
-				Object result = getInvokerInstance(annotationType, apiMapping).invoke(restTemplate, getAPIUrl(invokerInstance, annotation, method, args),
-					method, annotation, args);
-				return result;
+				RestTemplateInvoker invokerInstance = getInvokerInstance(annotationType, apiMapping);
+				String apiURL = getAPIUrl(invokerInstance, annotation, method, args);
+				return invokerInstance.invoke(restTemplate, apiURL, method, annotation, args);
 			} catch (Exception e) {
 				log.debug(e.getMessage(), e);
 				throw new IllegalStateException(e);
@@ -263,7 +246,7 @@ public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
 			newInstance.addAPIArgumentNormalizer(DateTime.class, new APIArgumentNormalizer<DateTime>() {
 				@Override
 				public Object normalize(DateTime value) {
-					return value.toString(DateTimeFormat.forPattern("yyyyMMddHHmmss"));
+					return value.getMillis();
 				}
 			});
 
@@ -290,6 +273,61 @@ public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
 			});
 
 			return newInstance;
+		}
+	}
+
+	private static class TransactionCommands {
+		private final RestTemplateRepositoryInvocationHandler invocationHandler;
+		private final Transaction transaction;
+		private final Method method;
+		private final Annotation annotation;
+		private final Object[] args;
+
+		TransactionCommands(RestTemplateRepositoryInvocationHandler invocationHandler, Transaction transaction, Method method,
+			Annotation annotation, Object[] args) {
+			this.invocationHandler = invocationHandler;
+			this.transaction = transaction;
+			this.method = method;
+			this.annotation = annotation;
+			this.args = args;
+		}
+
+		TransactionCommand commit(final Object apiCallResult) {
+			return new TransactionCommand() {
+				@Override
+				public void execute() {
+					callCommitApi(transaction, method, annotation, args, apiCallResult);
+				}
+			};
+		}
+
+		TransactionCommand rollback(final Object apiCallResult) {
+			return new TransactionCommand() {
+				@Override
+				public void execute() {
+					callRollbackApi(transaction, method, annotation, args, apiCallResult);
+				}
+			};
+		}
+
+		private void callCommitApi(final Transaction transaction, final Method method,
+			final Annotation annotation, final Object[] args, Object result) {
+			callTransactionFinishAPI(transaction, method, args, result, transaction.commit());
+		}
+
+		private void callRollbackApi(final Transaction transaction, final Method method, final Annotation annotation, final Object[] args,
+			Object result) {
+			callTransactionFinishAPI(transaction, method, args, result, transaction.rollback());
+		}
+
+		private void callTransactionFinishAPI(final Transaction transaction, final Method method, final Object[] args, Object result, String apiURI) {
+			TransactionIdFrom transactionIdFrom = transaction.transactionIdFrom();
+			Object extractTransactionInfo = transactionIdFrom.extractTransactionInfo(transaction.transactionId(), method, args, result);
+
+			Put.RestTemplateInvoker restTemplateInvoker = new Put.RestTemplateInvoker();
+			String apiFullURL = invocationHandler.apiURLPrefix + apiURI;
+			restTemplateInvoker.doInvoke(invocationHandler.restTemplate, apiFullURL, extractTransactionInfo);
+			RestTemplateRepositoryInvocationHandler.log.debug("finishing transaction... with {}", apiFullURL);
 		}
 	}
 }
