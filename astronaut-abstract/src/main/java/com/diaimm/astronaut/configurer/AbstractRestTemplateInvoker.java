@@ -34,11 +34,11 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 public abstract class AbstractRestTemplateInvoker<T extends Annotation> implements RestTemplateInvoker<T> {
-	private static Logger log = LoggerFactory.getLogger(AbstractRestTemplateInvoker.class);
+	private static final Logger log = LoggerFactory.getLogger(AbstractRestTemplateInvoker.class);
 	private static final String COMPACTIZE_TARGET_PREFIX = "!";
-	private final Pattern BINDING_PATTERN = Pattern.compile("\\{\\s*([!]{0,1}[a-zA-Z_0-9^}]+)\\s*\\}");
-	private final Object cacheLock = new Object();
-	private Map<Class<?>, APIArgumentNormalizer<?>> argumentNormalizers = Maps.newConcurrentMap();
+	private static final Pattern BINDING_PATTERN = Pattern.compile("\\{\\s*([!]{0,1}[a-zA-Z_0-9^}]+)\\s*\\}");
+	private final Object normalizerCacheLock = new Object();
+	private Map<Class<?>, APIArgumentNormalizer<?>> argumentNormalizerCache = Maps.newConcurrentMap();
 
 	/**
 	 * LocalVariableTableParameterNameDiscoverer parameterNameDiscoverer = new
@@ -110,11 +110,11 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 	}
 
 	private void processParamAnnotatedArgument(List<ParamConfig> result, Annotation[] annotations) {
-		Param param = AnnotationUtilsExt.find(annotations, Param.class);
-		if (param == null) {
+		Optional<Param> param = AnnotationUtilsExt.find(annotations, Param.class);
+		if (!param.isPresent()) {
 			return;
 		}
-		result.add(new ParamConfig(param.value(), param.value()));
+		result.add(new ParamConfig(param.get().value(), param.get().value()));
 	}
 
 	@Override
@@ -166,10 +166,10 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 
 	@Override
 	public void addAPIArgumentNormalizer(Class<?> supportType, APIArgumentNormalizer<?> normalizer) {
-		if (!this.argumentNormalizers.containsKey(supportType)) {
-			synchronized (cacheLock) {
-				if (!this.argumentNormalizers.containsKey(supportType)) {
-					this.argumentNormalizers.put(supportType, normalizer);
+		if (!this.argumentNormalizerCache.containsKey(supportType)) {
+			synchronized (normalizerCacheLock) {
+				if (!this.argumentNormalizerCache.containsKey(supportType)) {
+					this.argumentNormalizerCache.put(supportType, normalizer);
 				}
 			}
 		}
@@ -181,9 +181,9 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 			return null;
 		}
 
-		if (!this.argumentNormalizers.containsKey(normalizerType)) {
-			synchronized (cacheLock) {
-				if (!this.argumentNormalizers.containsKey(normalizerType)) {
+		if (!this.argumentNormalizerCache.containsKey(normalizerType)) {
+			synchronized (normalizerCacheLock) {
+				if (!this.argumentNormalizerCache.containsKey(normalizerType)) {
 					try {
 						Constructor<? extends APIArgumentNormalizer> declaredConstructor = normalizerType.getDeclaredConstructor();
 						declaredConstructor.setAccessible(true);
@@ -197,7 +197,7 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 			}
 		}
 
-		return this.argumentNormalizers.get(normalizerType);
+		return this.argumentNormalizerCache.get(normalizerType);
 	}
 
 	Object[] normalizeArguments(String apiUrl, Method method, Object[] args)
@@ -214,8 +214,8 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 				continue;
 			}
 
-			Form formAnnotation = AnnotationUtilsExt.find(parameterAnnotations[index], Form.class);
-			if (formAnnotation != null) {
+			Optional<Form> formAnnotation = AnnotationUtilsExt.find(parameterAnnotations[index], Form.class);
+			if (formAnnotation.isPresent()) {
 				return this.normalizeArgumentsFromForm(extractBindings(apiUrl), args);
 			}
 			result.add(normalizeArgument(findArgumentAnnotatedNormalizer(parameterAnnotations[index]), args[index]));
@@ -285,14 +285,14 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 			return normalizer.normalize(parameterValue);
 		}
 
-		if (this.argumentNormalizers.containsKey(parameterValue.getClass())) {
-			APIArgumentNormalizer apiArgumentNormalizer = this.argumentNormalizers.get(parameterValue.getClass());
+		if (this.argumentNormalizerCache.containsKey(parameterValue.getClass())) {
+			APIArgumentNormalizer apiArgumentNormalizer = this.argumentNormalizerCache.get(parameterValue.getClass());
 			return apiArgumentNormalizer.normalize(parameterValue);
 		}
 
-		for (Class<?> supportingType : this.argumentNormalizers.keySet()) {
+		for (Class<?> supportingType : this.argumentNormalizerCache.keySet()) {
 			if (supportingType.isAssignableFrom(parameterValue.getClass())) {
-				APIArgumentNormalizer apiArgumentNormalizer = this.argumentNormalizers.get(supportingType);
+				APIArgumentNormalizer apiArgumentNormalizer = this.argumentNormalizerCache.get(supportingType);
 				return apiArgumentNormalizer.normalize(parameterValue);
 			}
 		}
@@ -302,14 +302,14 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 
 	@SuppressWarnings("rawtypes")
 	private APIArgumentNormalizer findArgumentAnnotatedNormalizer(Annotation[] annotations) {
-		Param param = AnnotationUtilsExt.find(annotations, Param.class);
-		if (param != null) {
-			return findCachedArgumentNormalizer(param.normalizer());
+		Optional<Param> param = AnnotationUtilsExt.find(annotations, Param.class);
+		if (param.isPresent()) {
+			return findCachedArgumentNormalizer(param.get().normalizer());
 		}
 
-		PathParam pathParam = AnnotationUtilsExt.find(annotations, PathParam.class);
-		if (pathParam != null) {
-			return findCachedArgumentNormalizer(pathParam.normalizer());
+		Optional<PathParam> pathParam = AnnotationUtilsExt.find(annotations, PathParam.class);
+		if (pathParam.isPresent()) {
+			return findCachedArgumentNormalizer(pathParam.get().normalizer());
 		}
 
 		return null;
@@ -334,7 +334,7 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 		private final String sourceApiUrl;
 		private final Object[] sourceArguments;
 		private String apiUrl;
-		private Object postBody;
+		private Optional<Object> postBody;
 		private Method method;
 		private Object[] arguments;
 
@@ -349,9 +349,9 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 			this.compactize();
 		}
 
-		Object findPostBody(Object[] args) throws IllegalArgumentException, IllegalAccessException {
+		Optional<Object> findPostBody(Object[] args) throws IllegalArgumentException, IllegalAccessException {
 			if (ArrayUtils.isEmpty(args)) {
-				return null;
+				return Optional.absent();
 			}
 
 			Annotation[][] parameterAnnotations = method.getParameterAnnotations();
@@ -365,29 +365,32 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 					found = args[index];
 				}
 
-				Form formAnnotation = AnnotationUtilsExt.find(parameterAnnotations[index], Form.class);
-				if (formAnnotation != null) {
-					Object fromForm = this.findPostBody(args[index]);
-					if (fromForm != null) {
-						if (found != null) {
-							raiseMoreThan1PostBodyFoundException();
-						}
-
-						found = fromForm;
-					}
+				Optional<Form> formAnnotation = AnnotationUtilsExt.find(parameterAnnotations[index], Form.class);
+				if (!formAnnotation.isPresent()) {
+					continue;
 				}
+
+				Optional<Object> fromForm = this.findPostBody(args[index]);
+				if (!fromForm.isPresent()) {
+					continue;
+				}
+
+				if (found != null) {
+					raiseMoreThan1PostBodyFoundException();
+				}
+				found = fromForm;
 			}
 
-			return found;
+			return Optional.fromNullable(found);
 		}
 
 		private void raiseMoreThan1PostBodyFoundException() {
 			throw new IllegalStateException("found more than 1 PostBody annotated fields(or params)");
 		}
 
-		Object findPostBody(Object formInstance) throws IllegalArgumentException, IllegalAccessException {
+		Optional<Object> findPostBody(Object formInstance) throws IllegalArgumentException, IllegalAccessException {
 			if (formInstance == null) {
-				return null;
+				return Optional.absent();
 			}
 
 			Class<?> formClass = formInstance.getClass();
@@ -402,7 +405,8 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 					found = field.get(formInstance);
 				}
 			}
-			return found;
+
+			return Optional.fromNullable(found);
 		}
 
 		void compactize() {

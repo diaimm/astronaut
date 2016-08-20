@@ -4,7 +4,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
@@ -37,18 +36,6 @@ public @interface GetForObject {
 			GetForObject annotation)
 			throws Exception {
 			return restTemplate.getForObject(compactizer.getApiUrl(), returnType, compactizer.getArguments());
-		}
-
-		private Object getDummyValue(Type returnType, GetForObject annotation) throws IllegalAccessException, InstantiationException {
-			Class<?> rawClass = toRawClass(returnType);
-			return rawClass.cast(annotation.dummySupplier().newInstance().get());
-		}
-
-		private Class<?> toRawClass(Type returnType) {
-			if (returnType instanceof ParameterizedType) {
-				return (Class<?>) ((ParameterizedType) returnType).getRawType();
-			}
-			return (Class<?>) returnType;
 		}
 	}
 

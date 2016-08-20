@@ -2,20 +2,23 @@ package com.diaimm.astronaut.configurer;
 
 import java.lang.annotation.Annotation;
 
+import com.diaimm.astronaut.configurer.annotations.APIMapping;
+import com.google.common.base.Optional;
+
 public class AnnotationUtilsExt extends org.springframework.core.annotation.AnnotationUtils {
 	private AnnotationUtilsExt() {
 		throw new UnsupportedOperationException("instantiation is not allowed");
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <A extends Annotation> A find(Annotation[] annotations, Class<A> target) {
+	public static <A extends Annotation> Optional<A> find(Annotation[] annotations, Class<A> target) {
 		for (Annotation annotation : annotations) {
 			if (target.isAssignableFrom(annotation.annotationType())) {
-				return (A) annotation;
+				return Optional.of((A) annotation);
 			}
 		}
 
-		return null;
+		return Optional.absent();
 	}
 
 	public static boolean contains(Annotation[] annotations, Class<? extends Annotation> annotationType) {
@@ -25,5 +28,15 @@ public class AnnotationUtilsExt extends org.springframework.core.annotation.Anno
 			}
 		}
 		return false;
+	}
+
+	public static Optional<Annotation> findAnyAnnotationAnnotatedWith(Annotation[] annotations, Class<? extends Annotation> annotatedWith) {
+		for (Annotation annotation : annotations) {
+			if (annotation.annotationType().isAnnotationPresent(APIMapping.class)) {
+				return Optional.of(annotation);
+			}
+		}
+		
+		return Optional.absent();
 	}
 }
