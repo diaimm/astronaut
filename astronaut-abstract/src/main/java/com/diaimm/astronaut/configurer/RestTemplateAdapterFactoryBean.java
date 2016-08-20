@@ -41,7 +41,7 @@ public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
 	private ApplicationContext applicationContext;
 	@Autowired
 	private Environment environment;
-	private RestTemplateRepositoryInvocationHandler invocationHandler;
+	private InvocationHandler invocationHandler;
 	private final String apiURIPropertyKey;
 	private final Version version;
 	private final Class<T> target;
@@ -76,7 +76,7 @@ public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
 	@PostConstruct
 	private void init() throws URISyntaxException {
 		TypeHandlingRestTemplate restTemplate = applicationContext.getBean(restTemplateName, TypeHandlingRestTemplate.class);
-		this.invocationHandler = new RestTemplateRepositoryInvocationHandler(restTemplate, getAPIUrl(), version.getApiPrefix(), transactionManger);
+		this.invocationHandler = new TransactionalRestTemplateInvocationHandler(restTemplate, getAPIUrl(), version.getApiPrefix(), transactionManger);
 	}
 
 	private URI getAPIUrl() throws URISyntaxException {
@@ -98,23 +98,12 @@ public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private static class RestTemplateRepositoryInvocationHandler implements InvocationHandler {
 		private static final Logger log = LoggerFactory.getLogger(RestTemplateRepositoryInvocationHandler.class);
-		private static final Map<Class<? extends Annotation>, RestTemplateInvoker<?>> restTemplateInvokerCache = Maps.newConcurrentMap();
-		private static final Object restTemplateInvokerCacheLock = new Object();
-		private static final ObjectMapper mapper = new ObjectMapper();
-
-		static {
-			mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-		}
-
 		private TypeHandlingRestTemplate restTemplate;
 		private String apiURLPrefix;
-		private RestTemplateTransactionManager transactionManger;
 
-		private RestTemplateRepositoryInvocationHandler(TypeHandlingRestTemplate restTemplate, URI apiURI, String pathPrefix,
-			RestTemplateTransactionManager transactionManger) {
+		private RestTemplateRepositoryInvocationHandler(TypeHandlingRestTemplate restTemplate, URI apiURI, String pathPrefix) {
 			this.apiURLPrefix = apiURI + pathPrefix;
 			this.restTemplate = restTemplate;
-			this.transactionManger = transactionManger;
 		}
 
 		@Override
@@ -126,12 +115,47 @@ public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
 				return null;
 			}
 
+			Annotation annotation = apiMappingAnnotation.get();
+			Class<? extends Annotation> annotationType = annotation.annotationType();
+			try {
+				RestTemplateInvoker invokerInstance = RestTemplateInvokerCache.getInvokerInstance(annotationType,
+					annotationType.getAnnotation(APIMapping.class));
+				String apiURL = apiURLPrefix + invokerInstance.extractAPIUrl(annotation, method, args);
+				return invokerInstance.invoke(restTemplate, apiURL, method, annotation, args);
+			} catch (Exception e) {
+				log.debug(e.getMessage(), e);
+				throw new IllegalStateException(e);
+			}
+		}
+	}
+
+	private static class TransactionalRestTemplateInvocationHandler implements InvocationHandler {
+		private static final Logger log = LoggerFactory.getLogger(TransactionalRestTemplateInvocationHandler.class);
+		private RestTemplateRepositoryInvocationHandler invocationHandler;
+		private RestTemplateTransactionManager transactionManger;
+
+		TransactionalRestTemplateInvocationHandler(TypeHandlingRestTemplate restTemplate, URI apiURI, String pathPrefix,
+			RestTemplateTransactionManager transactionManger) {
+			this.invocationHandler = new RestTemplateRepositoryInvocationHandler(restTemplate, apiURI, pathPrefix);
+			this.transactionManger = transactionManger;
+
+		}
+
+		@Override
+		public Object invoke(Object instance, Method method, Object[] args) throws Throwable {
+			Annotation[] annotations = method.getAnnotations();
+
+			Optional<Annotation> apiMappingAnnotation = AnnotationUtilsExt.findAnyAnnotationAnnotatedWith(annotations, APIMapping.class);
+			if (!apiMappingAnnotation.isPresent()) {
+				return null;
+			}
+
 			Object result = null;
 			RuntimeException exception = null;
-			Optional<TransactionCommands> transactionCommands = makeTransactionCommands(AnnotationUtilsExt.find(annotations, Transaction.class),
-				method, args);
+			Optional<TransactionCommands> transactionCommands = TransactionCommands.create(invocationHandler, method, args,
+				AnnotationUtilsExt.find(annotations, Transaction.class));
 			try {
-				result = invokeAPICall(method, apiMappingAnnotation.get(), args);
+				result = invocationHandler.invoke(instance, method, args);
 				result = addCallInfoForTransaction(transactionCommands, result);
 				return result;
 			} catch (RuntimeException e) {
@@ -140,14 +164,6 @@ public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
 			} finally {
 				endTransactionIfNeed(transactionCommands, result, exception);
 			}
-		}
-
-		private Optional<TransactionCommands> makeTransactionCommands(Optional<Transaction> transaction, Method method, Object[] args) {
-			if (!transaction.isPresent()) {
-				return Optional.absent();
-			}
-
-			return Optional.of(new TransactionCommands(this, transaction.get(), method, args));
 		}
 
 		private Object addCallInfoForTransaction(Optional<TransactionCommands> commands, final Object apiCallResult) {
@@ -195,26 +211,19 @@ public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
 				log.error(e.getMessage(), e);
 			}
 		}
+	}
 
-		private Object invokeAPICall(Method method, Annotation annotation, Object[] args) {
-			Class<? extends Annotation> annotationType = annotation.annotationType();
-			APIMapping apiMapping = annotationType.getAnnotation(APIMapping.class);
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private static class RestTemplateInvokerCache {
+		private static final Map<Class<? extends Annotation>, RestTemplateInvoker<?>> restTemplateInvokerCache = Maps.newConcurrentMap();
+		private static final Object restTemplateInvokerCacheLock = new Object();
+		private static final ObjectMapper mapper = new ObjectMapper();
 
-			try {
-				RestTemplateInvoker invokerInstance = getInvokerInstance(annotationType, apiMapping);
-				String apiURL = getAPIUrl(invokerInstance, annotation, method, args);
-				return invokerInstance.invoke(restTemplate, apiURL, method, annotation, args);
-			} catch (Exception e) {
-				log.debug(e.getMessage(), e);
-				throw new IllegalStateException(e);
-			}
+		static {
+			mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 		}
 
-		private String getAPIUrl(RestTemplateInvoker invokerInstance, Annotation annotation, Method method, Object[] args) {
-			return apiURLPrefix + invokerInstance.extractAPIUrl(annotation, method, args);
-		}
-
-		private RestTemplateInvoker getInvokerInstance(Class<? extends Annotation> annotationType, APIMapping apiMapping)
+		static RestTemplateInvoker getInvokerInstance(Class<? extends Annotation> annotationType, APIMapping apiMapping)
 			throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 			synchronized (restTemplateInvokerCacheLock) {
 				if (!restTemplateInvokerCache.containsKey(annotationType)) {
@@ -229,7 +238,7 @@ public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
 			}
 		}
 
-		private RestTemplateInvoker addArgumentNormalizers(RestTemplateInvoker newInstance) {
+		private static RestTemplateInvoker addArgumentNormalizers(RestTemplateInvoker newInstance) {
 			newInstance.addAPIArgumentNormalizer(DateTime.class, new APIArgumentNormalizer<DateTime>() {
 				@Override
 				public Object normalize(DateTime value) {
@@ -274,6 +283,15 @@ public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
 			this.transaction = transaction;
 			this.method = method;
 			this.args = args;
+		}
+
+		static Optional<TransactionCommands> create(RestTemplateRepositoryInvocationHandler invocationHandler, Method method, Object[] args,
+			Optional<Transaction> transaction) {
+			if (!transaction.isPresent()) {
+				return Optional.absent();
+			}
+
+			return Optional.of(new TransactionCommands(invocationHandler, transaction.get(), method, args));
 		}
 
 		TransactionCommand commit(final Object apiCallResult) {
