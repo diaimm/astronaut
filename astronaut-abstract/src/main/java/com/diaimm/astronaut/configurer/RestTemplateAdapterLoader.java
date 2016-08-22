@@ -18,6 +18,7 @@ import org.springframework.core.type.ClassMetadata;
 import org.springframework.core.type.classreading.MetadataReader;
 
 import com.diaimm.astronaut.configurer.annotations.RestAPIRepository;
+import com.diaimm.astronaut.configurer.factorybean.RestTemplateAdapterFactoryBean;
 import com.diaimm.astronaut.configurer.transaction.RestTemplateTransactionManager;
 import com.google.common.collect.Sets;
 

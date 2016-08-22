@@ -1,4 +1,4 @@
-package com.diaimm.astronaut.configurer;
+package com.diaimm.astronaut.configurer.factorybean;
 
 public class RestTemplateAdapterFactoryBeanTest {
 
