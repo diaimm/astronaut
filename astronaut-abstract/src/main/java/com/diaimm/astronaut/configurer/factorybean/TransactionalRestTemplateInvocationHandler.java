@@ -19,12 +19,17 @@ import com.google.common.base.Optional;
 class TransactionalRestTemplateInvocationHandler implements InvocationHandler {
 	private static final Logger log = LoggerFactory.getLogger(TransactionalRestTemplateInvocationHandler.class);
 	private RestTemplateRepositoryInvocationHandler invocationHandler;
-	private RestTemplateTransactionManager transactionManger;
+	private RestTemplateTransactionManager transactionManager;
 
 	TransactionalRestTemplateInvocationHandler(TypeHandlingRestTemplate restTemplate, URI apiURI, String pathPrefix,
 		RestTemplateTransactionManager transactionManger) {
-		this.invocationHandler = new RestTemplateRepositoryInvocationHandler(restTemplate, apiURI, pathPrefix);
-		this.transactionManger = transactionManger;
+		this(new RestTemplateRepositoryInvocationHandler(restTemplate, apiURI, pathPrefix), transactionManger);
+	}
+	
+	TransactionalRestTemplateInvocationHandler(RestTemplateRepositoryInvocationHandler invocationHandler,
+		RestTemplateTransactionManager transactionManger) {
+		this.invocationHandler = invocationHandler;
+		this.transactionManager = transactionManger;
 	}
 
 	@Override
@@ -57,7 +62,7 @@ class TransactionalRestTemplateInvocationHandler implements InvocationHandler {
 			return apiCallResult;
 		}
 
-		RestTemplateTransactionObject transactionObject = this.transactionManger.getTransactionObject();
+		RestTemplateTransactionObject transactionObject = this.transactionManager.getTransactionObject();
 		if (transactionObject == null) {
 			return apiCallResult;
 		}
@@ -71,7 +76,7 @@ class TransactionalRestTemplateInvocationHandler implements InvocationHandler {
 			return;
 		}
 
-		RestTemplateTransactionObject transactionObject = this.transactionManger.getTransactionObject();
+		RestTemplateTransactionObject transactionObject = this.transactionManager.getTransactionObject();
 		// if transactionObject is not null, commits or rollbacks will happen in transaction manager.
 		if (transactionObject != null) {
 			return;

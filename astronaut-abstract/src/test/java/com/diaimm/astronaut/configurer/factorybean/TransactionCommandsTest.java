@@ -10,10 +10,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.diaimm.astronaut.configurer.APIResponse;
 import com.diaimm.astronaut.configurer.annotations.mapping.Transaction;
-import com.diaimm.astronaut.configurer.annotations.method.PostForObject;
+import com.diaimm.astronaut.configurer.factorybean.SampleClass.SomeSampleResponse;
 import com.diaimm.astronaut.configurer.factorybean.TransactionCommands.TransactionAPICaller;
 import com.google.common.base.Optional;
-import com.google.common.base.Supplier;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TransactionCommandsTest {
@@ -36,9 +35,9 @@ public class TransactionCommandsTest {
 
 	@Test
 	public void withActualMethodTest() throws NoSuchMethodException, SecurityException {
+		RestTemplateRepositoryInvocationHandler invocationHandler = Mockito.mock(RestTemplateRepositoryInvocationHandler.class);
 		Method method = SampleClass.class.getDeclaredMethod("testMethod");
 		method.setAccessible(true);
-		RestTemplateRepositoryInvocationHandler invocationHandler = Mockito.mock(RestTemplateRepositoryInvocationHandler.class);
 		Transaction transaction = method.getAnnotation(Transaction.class);
 		Object[] args = new Object[0];
 		TransactionAPICaller transactionAPICaller = Mockito.mock(TransactionAPICaller.class);
@@ -60,22 +59,5 @@ public class TransactionCommandsTest {
 			Mockito.eq("http://this.is.the.prefix/this/is/to/commit"), Mockito.anyObject());
 		Mockito.verify(transactionAPICaller).callTransactionAPI((RestTemplateRepositoryInvocationHandler) Mockito.anyObject(),
 			Mockito.eq("http://this.is.the.prefix/and/for/rollback"), Mockito.anyObject());
-	}
-
-	private static interface SampleClass {
-		@PostForObject(dummySupplier = SomeSmapleResponseDummySupplier.class)
-		@Transaction(commit = "/this/is/to/commit", rollback = "/and/for/rollback")
-		public APIResponse<SomeSampleResponse> testMethod();
-	}
-
-	private static class SomeSampleResponse {
-
-	}
-
-	public static class SomeSmapleResponseDummySupplier implements Supplier<SomeSampleResponse> {
-		@Override
-		public SomeSampleResponse get() {
-			return new SomeSampleResponse();
-		}
 	}
 }
