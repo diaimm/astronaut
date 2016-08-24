@@ -57,7 +57,7 @@ class RestTemplateRepositoryInvocationHandler implements InvocationHandler {
 		}
 	}
 
-	private static class RestTemplateInvokerCache {
+	static class RestTemplateInvokerCache {
 		private static final Map<Class<? extends Annotation>, RestTemplateInvoker<?>> restTemplateInvokerCache = Maps.newConcurrentMap();
 		private static final Object restTemplateInvokerCacheLock = new Object();
 		private static final ObjectMapper mapper = new ObjectMapper();

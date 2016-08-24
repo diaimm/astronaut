@@ -40,6 +40,11 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 	private final Object normalizerCacheLock = new Object();
 	private Map<Class<?>, APIArgumentNormalizer<?>> argumentNormalizerCache = Maps.newConcurrentMap();
 
+	@Override
+	public Map<Class<?>, APIArgumentNormalizer<?>> getAPIArgumentNomalizers() {
+		return Maps.newHashMap(argumentNormalizerCache);
+	}
+
 	/**
 	 * LocalVariableTableParameterNameDiscoverer parameterNameDiscoverer = new
 	 * LocalVariableTableParameterNameDiscoverer();
