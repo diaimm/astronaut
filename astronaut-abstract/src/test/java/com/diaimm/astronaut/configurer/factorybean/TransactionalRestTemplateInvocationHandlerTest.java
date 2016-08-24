@@ -48,6 +48,7 @@ public class TransactionalRestTemplateInvocationHandlerTest {
 		Assert.assertNotNull(result);
 		Assert.assertEquals(expected, result);
 		Mockito.verify(invocationHandler, Mockito.timeout(1)).getApiURLPrefix();
+		Mockito.reset(invocationHandler);
 		
 		try{
 			// no transaction and an exception
@@ -58,7 +59,7 @@ public class TransactionalRestTemplateInvocationHandlerTest {
 			Assert.fail();
 		} catch (RuntimeException e){
 			Assert.assertNotNull(e);
-//			Mockito.verify(invocationHandler).getApiURLPrefix();
+			Mockito.verify(invocationHandler, Mockito.times(1)).getApiURLPrefix();
 		}
 	}
 }
