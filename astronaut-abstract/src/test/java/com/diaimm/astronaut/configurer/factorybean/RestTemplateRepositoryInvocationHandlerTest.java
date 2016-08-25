@@ -17,7 +17,6 @@ import com.diaimm.astronaut.configurer.RestTemplateInvoker;
 import com.diaimm.astronaut.configurer.TypeHandlingRestTemplate;
 import com.diaimm.astronaut.configurer.annotations.APIMapping;
 import com.diaimm.astronaut.configurer.annotations.mapping.RequestURI;
-import com.diaimm.astronaut.configurer.annotations.method.GetForObject;
 import com.diaimm.astronaut.configurer.factorybean.RestTemplateRepositoryInvocationHandler.RestTemplateInvokerCache;
 import com.google.common.base.Supplier;
 
