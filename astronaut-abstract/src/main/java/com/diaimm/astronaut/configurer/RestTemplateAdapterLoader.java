@@ -56,24 +56,29 @@ public class RestTemplateAdapterLoader implements BeanFactoryPostProcessor {
 				try {
 					Resource[] resources = ((ResourcePatternResolver) this.getResourceLoader()).getResources(packageSearchPath);
 					for (Resource resource : resources) {
-						if (resource.isReadable()) {
-							MetadataReader metadataReader = this.getMetadataReaderFactory().getMetadataReader(resource);
-							if (isCandidateComponent(metadataReader)) {
-								ClassMetadata classMetadata = metadataReader.getClassMetadata();
-								Class<?> currentClass = Class.forName(classMetadata.getClassName());
-
-								BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.rootBeanDefinition(RestTemplateAdapterFactoryBean.class.getName());
-								beanDefinitionBuilder.addConstructorArgValue(version);
-								beanDefinitionBuilder.addConstructorArgValue(apiURIPropertyKey);
-								beanDefinitionBuilder.addConstructorArgValue(restTemplateBeanName);
-								beanDefinitionBuilder.addConstructorArgValue(currentClass);
-								beanDefinitionBuilder.addConstructorArgValue(transactionManger);
-
-								logger.debug("Identified candidate component class: " + resource);
-								AbstractBeanDefinition beanDefinition = beanDefinitionBuilder.getBeanDefinition();
-								defaultListableBeanFactory.registerBeanDefinition(currentClass.getName(), beanDefinition);
-							}
+						if (!resource.isReadable()) {
+							continue;
 						}
+
+						MetadataReader metadataReader = this.getMetadataReaderFactory().getMetadataReader(resource);
+						if (!isCandidateComponent(metadataReader)) {
+							continue;
+						}
+
+						ClassMetadata classMetadata = metadataReader.getClassMetadata();
+						Class<?> currentClass = Class.forName(classMetadata.getClassName());
+
+						BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.rootBeanDefinition(
+							RestTemplateAdapterFactoryBean.class.getName());
+						beanDefinitionBuilder.addConstructorArgValue(version);
+						beanDefinitionBuilder.addConstructorArgValue(apiURIPropertyKey);
+						beanDefinitionBuilder.addConstructorArgValue(restTemplateBeanName);
+						beanDefinitionBuilder.addConstructorArgValue(currentClass);
+						beanDefinitionBuilder.addConstructorArgValue(transactionManger);
+
+						logger.debug("Identified candidate component class: " + resource);
+						AbstractBeanDefinition beanDefinition = beanDefinitionBuilder.getBeanDefinition();
+						defaultListableBeanFactory.registerBeanDefinition(currentClass.getName(), beanDefinition);
 					}
 				} catch (Exception e) {
 					throw new BeanCreationException("bean 생성 실패 ", e);
@@ -97,11 +102,11 @@ public class RestTemplateAdapterLoader implements BeanFactoryPostProcessor {
 			}
 
 			private boolean isTargetAnnotationPresent(Class<?> currentClass) {
-				if (currentClass.isAnnotationPresent(RestAPIRepository.class)) {
-					return isValueMatch(currentClass.getAnnotation(RestAPIRepository.class).value());
+				if (!currentClass.isAnnotationPresent(RestAPIRepository.class)) {
+					return false;
 				}
-
-				return false;
+				
+				return isValueMatch(currentClass.getAnnotation(RestAPIRepository.class).value());
 			}
 
 			private boolean isValueMatch(String annotationValue) {
@@ -109,6 +114,7 @@ public class RestTemplateAdapterLoader implements BeanFactoryPostProcessor {
 				if (StringUtils.isBlank(resourceName)) {
 					return StringUtils.isBlank(annotationValue);
 				}
+				
 				return resourceName.equals(annotationValue.trim());
 			}
 		};
