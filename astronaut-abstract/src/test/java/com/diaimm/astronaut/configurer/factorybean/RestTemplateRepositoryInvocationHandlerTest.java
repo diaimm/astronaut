@@ -40,7 +40,7 @@ public class RestTemplateRepositoryInvocationHandlerTest {
 	public void RestTemplateInvokerCacheTest() {
 		try {
 			Method someMethod = SomeRepository.class.getDeclaredMethod("someMethod");
-			Class<? extends Annotation> annotationType = GetForObject.class;
+			Class<? extends Annotation> annotationType = APICallerSample.class;
 			RestTemplateInvoker<?> invokerInstance = RestTemplateInvokerCache.getInvokerInstance(annotationType,
 				someMethod.getAnnotation(APIMapping.class));
 
