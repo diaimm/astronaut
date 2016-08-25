@@ -32,7 +32,7 @@ public class AnnotationUtilsExt extends org.springframework.core.annotation.Anno
 
 	public static Optional<Annotation> findAnyAnnotationAnnotatedWith(Annotation[] annotations, Class<? extends Annotation> annotatedWith) {
 		for (Annotation annotation : annotations) {
-			if (annotation.annotationType().isAnnotationPresent(APIMapping.class)) {
+			if (annotation.annotationType().isAnnotationPresent(annotatedWith)) {
 				return Optional.of(annotation);
 			}
 		}
