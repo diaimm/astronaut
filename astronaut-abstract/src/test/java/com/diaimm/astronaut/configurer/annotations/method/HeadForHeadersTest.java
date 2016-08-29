@@ -27,7 +27,7 @@ public class HeadForHeadersTest {
 		Assert.assertEquals("http://api.url.property.sample/v1/sample/url/path?id={id}&age={age}", response.getApiUrl());
 		Assert.assertEquals("diaimm", response.getArgs()[0]);
 		Assert.assertEquals(111, response.getArgs()[1]);
-		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/url/path?id=diaimm&age=111"));
+		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/url/path"));
 	}
 
 	@Test

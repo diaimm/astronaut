@@ -27,7 +27,7 @@ public class PostForObjectTest {
 		Assert.assertEquals("http://api.url.property.sample/v1/sample/url/path?id={id}&age={age}", response.getApiUrl());
 		Assert.assertEquals("diaimm", response.getArgs()[0]);
 		Assert.assertEquals(111, response.getArgs()[1]);
-		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/url/path?id=diaimm&age=111"));
+		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/url/path"));
 	}
 
 	@Test
@@ -71,16 +71,16 @@ public class PostForObjectTest {
 		APIResponse<SampleResponse> response = postForObjectRepository.usingParamDTO(ComplexParamDTO.create("diaimm", 111, "test"));
 		Assert.assertFalse(response.isSuccess());
 		Assert.assertEquals("http://api.url.property.sample/v1/sample/{!path1}/{path2}/{path3}?param1={param1}&param2={param2}&param3={param3}", response.getApiUrl());
-		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/diaimm/111/test?param1=param111&param2=param112&param3=param113"));
+		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/diaimm/111/test"));
 
 		response = postForObjectRepository.usingParamDTO(ComplexParamDTO.create(null, 111, "test"));
 		Assert.assertFalse(response.isSuccess());
 		Assert.assertEquals("http://api.url.property.sample/v1/sample/{!path1}/{path2}/{path3}?param1={param1}&param2={param2}&param3={param3}", response.getApiUrl());
-		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/111/test?param1=param111&param2=param112&param3=param113"));
+		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/111/test"));
 
 		response = postForObjectRepository.usingParamDTO(ComplexParamDTO.create(null, 111, null));
 		Assert.assertFalse(response.isSuccess());
 		Assert.assertEquals("http://api.url.property.sample/v1/sample/{!path1}/{path2}/{path3}?param1={param1}&param2={param2}&param3={param3}", response.getApiUrl());
-		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/111/?param1=param111&param2=param112&param3=param113"));
+		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/111/"));
 	}
 }

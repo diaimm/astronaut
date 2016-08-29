@@ -6,7 +6,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -29,7 +28,7 @@ public class OptionsForAllowTest {
 		Assert.assertEquals("http://api.url.property.sample/v1/sample/url/path?id={id}&age={age}", response.getApiUrl());
 		Assert.assertEquals("diaimm", response.getArgs()[0]);
 		Assert.assertEquals(111, response.getArgs()[1]);
-		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/url/path?id=diaimm&age=111"));
+		Assert.assertTrue(response.getMessage().contains("http://api.url.property.sample/v1/sample/url/path"));
 	}
 
 	@Test

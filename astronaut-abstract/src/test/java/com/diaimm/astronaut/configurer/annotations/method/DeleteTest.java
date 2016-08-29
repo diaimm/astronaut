@@ -22,7 +22,7 @@ public class DeleteTest {
 		try {
 			deleteRepository.paramMapping("diaimm", 111);
 		} catch (IllegalStateException e) {
-			Assert.assertTrue(e.getMessage().contains("http://api.url.property.sample/v1/sample/url/path?id=diaimm&age=111"));
+			Assert.assertTrue(e.getMessage().contains("http://api.url.property.sample/v1/sample/url/path"));
 		}
 	}
 
