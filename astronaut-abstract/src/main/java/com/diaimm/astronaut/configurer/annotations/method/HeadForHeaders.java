@@ -7,9 +7,11 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Type;
 
 import org.springframework.http.HttpHeaders;
+import org.springframework.util.concurrent.ListenableFuture;
 
 import com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker;
-import com.diaimm.astronaut.configurer.TypeHandlingRestTemplate;
+import com.diaimm.astronaut.configurer.TypeHandlingAsyncRestOperations;
+import com.diaimm.astronaut.configurer.TypeHandlingRestOperations;
 import com.diaimm.astronaut.configurer.annotations.APIMapping;
 import com.diaimm.astronaut.configurer.annotations.mapping.RequestURI;
 import com.google.common.base.Supplier;
@@ -21,12 +23,19 @@ public @interface HeadForHeaders {
 	@RequestURI
 	String url() default "";
 
-	Class<? extends Supplier<?>> dummySupplier() default DummySupplierImpl.class;
+	Class<? extends Supplier<?>>dummySupplier() default DummySupplierImpl.class;
 
 	class RestTemplateInvoker extends AbstractRestTemplateInvoker<HeadForHeaders> {
 		@Override
-		protected HttpHeaders doInvoke(TypeHandlingRestTemplate restTemplate, APICallInfoCompactizer<HeadForHeaders> compactizer,
+		protected HttpHeaders doInvoke(TypeHandlingRestOperations restTemplate, APICallInfoCompactizer<HeadForHeaders> compactizer,
 			Type returnType, HeadForHeaders annotation) throws Exception {
+			return restTemplate.headForHeaders(compactizer.getApiUrl(), compactizer.getArguments());
+		}
+
+		@Override
+		protected ListenableFuture<?> doInvoke(TypeHandlingAsyncRestOperations restTemplate,
+			com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker.APICallInfoCompactizer<HeadForHeaders> compactizer, Type returnType,
+			HeadForHeaders annotation) throws Exception {
 			return restTemplate.headForHeaders(compactizer.getApiUrl(), compactizer.getArguments());
 		}
 	}

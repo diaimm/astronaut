@@ -6,8 +6,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Type;
 
+import org.springframework.util.concurrent.ListenableFuture;
+
 import com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker;
-import com.diaimm.astronaut.configurer.TypeHandlingRestTemplate;
+import com.diaimm.astronaut.configurer.TypeHandlingAsyncRestOperations;
+import com.diaimm.astronaut.configurer.TypeHandlingRestOperations;
 import com.diaimm.astronaut.configurer.annotations.APIMapping;
 import com.diaimm.astronaut.configurer.annotations.mapping.RequestURI;
 
@@ -20,15 +23,22 @@ public @interface Put {
 
 	class RestTemplateInvoker extends AbstractRestTemplateInvoker<Put> {
 		@Override
-		protected Object doInvoke(TypeHandlingRestTemplate restTemplate, APICallInfoCompactizer<Put> compactizer, Type returnType, Put annotation)
+		protected Object doInvoke(TypeHandlingRestOperations restTemplate, APICallInfoCompactizer<Put> compactizer, Type returnType, Put annotation)
 			throws Exception {
 			restTemplate.put(compactizer.getApiUrl(), null, compactizer.getArguments());
 			return true;
 		}
 
-		public Object doInvoke(TypeHandlingRestTemplate restTemplate, String apiUrl, Object args) {
+		public Object doInvoke(TypeHandlingRestOperations restTemplate, String apiUrl, Object args) {
 			restTemplate.put(apiUrl, null, args);
 			return null;
+		}
+
+		@Override
+		protected ListenableFuture<?> doInvoke(TypeHandlingAsyncRestOperations restTemplate,
+			com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker.APICallInfoCompactizer<Put> compactizer, Type returnType, Put annotation)
+				throws Exception {
+			return restTemplate.put(compactizer.getApiUrl(), null, compactizer.getArguments());
 		}
 	}
 }

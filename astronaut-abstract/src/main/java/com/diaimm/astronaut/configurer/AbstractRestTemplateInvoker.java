@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.ReflectionUtils;
+import org.springframework.util.concurrent.ListenableFuture;
 
 import com.diaimm.astronaut.configurer.annotations.mapping.Form;
 import com.diaimm.astronaut.configurer.annotations.mapping.Param;
@@ -122,12 +123,24 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 		result.add(new ParamConfig(param.get().value(), param.get().value()));
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
-	public Object invoke(TypeHandlingRestTemplate restTemplate, String apiUrl, Method method, T annotation, Object[] args) {
+	public Object invoke(TypeHandlingRestOperations restTemplate, TypeHandlingAsyncRestOperations asyncRestTemplate, String apiUrl, Method method,
+		T annotation, Object[] args) {
 		APICallInfoCompactizer<T> compactizer = null;
 		try {
 			compactizer = new APICallInfoCompactizer<T>(this, apiUrl, method, args);
 			Class<?> returnType = method.getReturnType();
+			if (AsyncAPIResponse.class.isAssignableFrom(returnType)) {
+				Type genericReturnType = method.getGenericReturnType();
+				if (ParameterizedType.class.isAssignableFrom(genericReturnType.getClass())) {
+					ParameterizedType parameterizedType = (ParameterizedType) genericReturnType;
+					ListenableFuture<?> forEntity = processDoAsyncInvoke(asyncRestTemplate,
+						((ParameterizedType) parameterizedType).getActualTypeArguments()[0], annotation, compactizer);
+					return new AsyncAPIResponse(forEntity);
+				}
+			}
+
 			if (APIResponse.class.isAssignableFrom(returnType)) {
 				Type genericReturnType = method.getGenericReturnType();
 				if (ParameterizedType.class.isAssignableFrom(genericReturnType.getClass())) {
@@ -149,7 +162,12 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 		}
 	}
 
-	private Object processDoInvoke(TypeHandlingRestTemplate restTemplate, Type returnType, T annotation, APICallInfoCompactizer<T> compactizer)
+	private ListenableFuture<?> processDoAsyncInvoke(TypeHandlingAsyncRestOperations asyncRestTemplate, Type returnType,
+		T annotation, APICallInfoCompactizer<T> compactizer) throws Exception {
+		return doInvoke(asyncRestTemplate, compactizer, returnType, annotation);
+	}
+
+	private Object processDoInvoke(TypeHandlingRestOperations restTemplate, Type returnType, T annotation, APICallInfoCompactizer<T> compactizer)
 		throws Exception {
 		Object result = doInvoke(restTemplate, compactizer, returnType, annotation);
 		if (result instanceof ResponseEntity) {
@@ -464,6 +482,10 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 		}
 	}
 
-	protected abstract Object doInvoke(TypeHandlingRestTemplate restTemplate, APICallInfoCompactizer<T> compactizer, Type returnType, T annotation)
+	protected abstract Object doInvoke(TypeHandlingRestOperations restTemplate, APICallInfoCompactizer<T> compactizer, Type returnType, T annotation)
 		throws Exception;
+
+	protected abstract ListenableFuture<?> doInvoke(TypeHandlingAsyncRestOperations restTemplate,
+		APICallInfoCompactizer<T> compactizer, Type returnType, T annotation)
+			throws Exception;
 }

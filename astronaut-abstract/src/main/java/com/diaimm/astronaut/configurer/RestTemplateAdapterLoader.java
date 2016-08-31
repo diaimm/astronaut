@@ -26,6 +26,7 @@ public class RestTemplateAdapterLoader implements BeanFactoryPostProcessor {
 	private final String apiURIPropertyKey;
 	private final Version version;
 	private final String restTemplateBeanName;
+	private final String asyncRestTemplateBeanName;
 	private final String name;
 	private final Class<?> baseClassToScan;
 	private final RestTemplateTransactionManager transactionManger;
@@ -37,10 +38,11 @@ public class RestTemplateAdapterLoader implements BeanFactoryPostProcessor {
 	}
 
 	public RestTemplateAdapterLoader(Version version, String apiURIPropertyKey, String name, String restTemplateBeanName,
-		RestTemplateTransactionManager transactionManger, Class<?> baseClassToScan) {
+		String asyncRestTemplateBeanName, RestTemplateTransactionManager transactionManger, Class<?> baseClassToScan) {
 		this.apiURIPropertyKey = apiURIPropertyKey;
 		this.name = name;
 		this.restTemplateBeanName = restTemplateBeanName;
+		this.asyncRestTemplateBeanName = asyncRestTemplateBeanName;
 		this.baseClassToScan = baseClassToScan;
 		this.version = version;
 		this.transactionManger = transactionManger;
@@ -73,6 +75,7 @@ public class RestTemplateAdapterLoader implements BeanFactoryPostProcessor {
 						beanDefinitionBuilder.addConstructorArgValue(version);
 						beanDefinitionBuilder.addConstructorArgValue(apiURIPropertyKey);
 						beanDefinitionBuilder.addConstructorArgValue(restTemplateBeanName);
+						beanDefinitionBuilder.addConstructorArgValue(asyncRestTemplateBeanName);
 						beanDefinitionBuilder.addConstructorArgValue(currentClass);
 						beanDefinitionBuilder.addConstructorArgValue(transactionManger);
 
@@ -105,7 +108,7 @@ public class RestTemplateAdapterLoader implements BeanFactoryPostProcessor {
 				if (!currentClass.isAnnotationPresent(RestAPIRepository.class)) {
 					return false;
 				}
-				
+
 				return isValueMatch(currentClass.getAnnotation(RestAPIRepository.class).value());
 			}
 
@@ -114,7 +117,7 @@ public class RestTemplateAdapterLoader implements BeanFactoryPostProcessor {
 				if (StringUtils.isBlank(resourceName)) {
 					return StringUtils.isBlank(annotationValue);
 				}
-				
+
 				return resourceName.equals(annotationValue.trim());
 			}
 		};

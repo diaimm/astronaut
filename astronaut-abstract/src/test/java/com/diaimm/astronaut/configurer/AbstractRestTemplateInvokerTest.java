@@ -7,7 +7,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.junit.Assert;
 import org.junit.Test;
+import org.springframework.util.concurrent.ListenableFuture;
 
 import com.diaimm.astronaut.configurer.annotations.mapping.Form;
 import com.diaimm.astronaut.configurer.annotations.mapping.Param;
@@ -15,8 +17,6 @@ import com.diaimm.astronaut.configurer.annotations.mapping.PathParam;
 import com.diaimm.astronaut.configurer.annotations.mapping.RequestURI;
 import com.diaimm.astronaut.configurer.annotations.method.GetForObject;
 import com.google.common.base.Supplier;
-
-import junit.framework.Assert;
 
 public class AbstractRestTemplateInvokerTest {
 	@Test
@@ -41,9 +41,16 @@ public class AbstractRestTemplateInvokerTest {
 
 		AbstractRestTemplateInvoker<Annotation> target = new AbstractRestTemplateInvoker<Annotation>() {
 			@Override
-			protected Object doInvoke(TypeHandlingRestTemplate restTemplate, APICallInfoCompactizer<Annotation> compactizer, Type returnType,
+			protected Object doInvoke(TypeHandlingRestOperations restTemplate, APICallInfoCompactizer<Annotation> compactizer, Type returnType,
 				Annotation annotation)
-				throws Exception {
+					throws Exception {
+				return null;
+			}
+
+			@Override
+			protected ListenableFuture<?> doInvoke(TypeHandlingAsyncRestOperations restTemplate,
+				com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker.APICallInfoCompactizer<Annotation> compactizer, Type returnType,
+				Annotation annotation) throws Exception {
 				return null;
 			}
 		};
@@ -67,13 +74,20 @@ public class AbstractRestTemplateInvokerTest {
 	public void invokeWithParamsTest() throws Exception {
 		AbstractRestTemplateInvoker<Annotation> target = new AbstractRestTemplateInvoker<Annotation>() {
 			@Override
-			protected Object doInvoke(TypeHandlingRestTemplate restTemplate, APICallInfoCompactizer<Annotation> compactizer, Type returnType,
+			protected Object doInvoke(TypeHandlingRestOperations restTemplate, APICallInfoCompactizer<Annotation> compactizer, Type returnType,
 				Annotation annotation)
-				throws Exception {
+					throws Exception {
 				Object[] args = compactizer.getArguments();
 				Assert.assertEquals(7, args.length);
 				Assert.assertEquals("1", args[0]);
 				Assert.assertEquals("7", args[6]);
+				return null;
+			}
+
+			@Override
+			protected ListenableFuture<?> doInvoke(TypeHandlingAsyncRestOperations restTemplate,
+				com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker.APICallInfoCompactizer<Annotation> compactizer, Type returnType,
+				Annotation annotation) throws Exception {
 				return null;
 			}
 		};
@@ -86,7 +100,7 @@ public class AbstractRestTemplateInvokerTest {
 			Object[] normalizeArguments = target.normalizeArguments(apiUrl, method, args);
 			System.out.println(ArrayUtils.toString(normalizeArguments, ""));
 
-			target.invoke(null, apiUrl, method, null, args);
+			target.invoke(null, null, apiUrl, method, null, args);
 		} catch (Exception e) {
 			throw e;
 		}
@@ -96,15 +110,22 @@ public class AbstractRestTemplateInvokerTest {
 	public void invokeWithParamsWithNullValueTest() throws Exception {
 		AbstractRestTemplateInvoker<Annotation> target = new AbstractRestTemplateInvoker<Annotation>() {
 			@Override
-			protected Object doInvoke(TypeHandlingRestTemplate restTemplate, APICallInfoCompactizer<Annotation> compactizer, Type returnType,
+			protected Object doInvoke(TypeHandlingRestOperations restTemplate, APICallInfoCompactizer<Annotation> compactizer, Type returnType,
 				Annotation annotation)
-				throws Exception {
+					throws Exception {
 				Object[] args = compactizer.getArguments();
 				String apiUrl = compactizer.getApiUrl();
 				Assert.assertEquals(5, args.length);
 				Assert.assertEquals(null, args[0]);
 				Assert.assertEquals("7", args[4]);
 				Assert.assertEquals("/test/{path1}/ddd/ddd/{ path4 }?value5={value5}&value6={value6}&value7={value7}", apiUrl);
+				return null;
+			}
+
+			@Override
+			protected ListenableFuture<?> doInvoke(TypeHandlingAsyncRestOperations restTemplate,
+				com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker.APICallInfoCompactizer<Annotation> compactizer, Type returnType,
+				Annotation annotation) throws Exception {
 				return null;
 			}
 		};
@@ -122,7 +143,7 @@ public class AbstractRestTemplateInvokerTest {
 			Object[] normalizeArguments = target.normalizeArguments(apiUrl, method, args);
 			System.out.println(ArrayUtils.toString(normalizeArguments, ""));
 
-			target.invoke(null, apiUrl, method, null, args);
+			target.invoke(null, null, apiUrl, method, null, args);
 		} catch (Exception e) {
 			throw e;
 		}
@@ -132,15 +153,22 @@ public class AbstractRestTemplateInvokerTest {
 	public void invokeWithFormWithNullsTest() throws Exception {
 		AbstractRestTemplateInvoker<Annotation> target = new AbstractRestTemplateInvoker<Annotation>() {
 			@Override
-			protected Object doInvoke(TypeHandlingRestTemplate restTemplate, APICallInfoCompactizer<Annotation> compactizer, Type returnType,
+			protected Object doInvoke(TypeHandlingRestOperations restTemplate, APICallInfoCompactizer<Annotation> compactizer, Type returnType,
 				Annotation annotation)
-				throws Exception {
+					throws Exception {
 				Object[] args = compactizer.getArguments();
 				String apiUrl = compactizer.getApiUrl();
 				Assert.assertEquals(5, args.length);
 				Assert.assertEquals(null, args[0]);
 				Assert.assertEquals("7", args[4]);
 				Assert.assertEquals("/test/{p1}/ddd/ddd/{ p4 }?param1={param1}&param2={param2}&param3={param3}", apiUrl);
+				return null;
+			}
+
+			@Override
+			protected ListenableFuture<?> doInvoke(TypeHandlingAsyncRestOperations restTemplate,
+				com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker.APICallInfoCompactizer<Annotation> compactizer, Type returnType,
+				Annotation annotation) throws Exception {
 				return null;
 			}
 		};
@@ -159,7 +187,7 @@ public class AbstractRestTemplateInvokerTest {
 			Object[] normalizeArguments = target.normalizeArguments(apiUrl, method, args);
 			System.out.println(ArrayUtils.toString(normalizeArguments, ""));
 
-			target.invoke(null, apiUrl, method, null, args);
+			target.invoke(null, null, apiUrl, method, null, args);
 		} catch (Exception e) {
 			throw e;
 		}
@@ -169,14 +197,21 @@ public class AbstractRestTemplateInvokerTest {
 	public void invokeWithFormTest() throws Exception {
 		AbstractRestTemplateInvoker<Annotation> target = new AbstractRestTemplateInvoker<Annotation>() {
 			@Override
-			protected Object doInvoke(TypeHandlingRestTemplate restTemplate, APICallInfoCompactizer<Annotation> compactizer, Type returnType,
+			protected Object doInvoke(TypeHandlingRestOperations restTemplate, APICallInfoCompactizer<Annotation> compactizer, Type returnType,
 				Annotation annotation)
-				throws Exception {
+					throws Exception {
 				Object[] args = compactizer.getArguments();
 				String apiUrl = compactizer.getApiUrl();
 				Assert.assertEquals(7, args.length);
 				Assert.assertEquals("1", args[0]);
 				Assert.assertEquals("7", args[6]);
+				return null;
+			}
+
+			@Override
+			protected ListenableFuture<?> doInvoke(TypeHandlingAsyncRestOperations restTemplate,
+				com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker.APICallInfoCompactizer<Annotation> compactizer, Type returnType,
+				Annotation annotation) throws Exception {
 				return null;
 			}
 		};
@@ -191,7 +226,7 @@ public class AbstractRestTemplateInvokerTest {
 			Object[] normalizeArguments = target.normalizeArguments(apiUrl, method, args);
 			System.out.println(ArrayUtils.toString(normalizeArguments, ""));
 
-			target.invoke(null, apiUrl, method, null, args);
+			target.invoke(null, null, apiUrl, method, null, args);
 		} catch (Exception e) {
 			throw e;
 		}
@@ -201,14 +236,21 @@ public class AbstractRestTemplateInvokerTest {
 	public void getRequestURIFromParamTest() throws Exception {
 		AbstractRestTemplateInvoker<Annotation> target = new AbstractRestTemplateInvoker<Annotation>() {
 			@Override
-			protected Object doInvoke(TypeHandlingRestTemplate restTemplate, APICallInfoCompactizer<Annotation> compactizer, Type returnType,
+			protected Object doInvoke(TypeHandlingRestOperations restTemplate, APICallInfoCompactizer<Annotation> compactizer, Type returnType,
 				Annotation annotation)
-				throws Exception {
+					throws Exception {
 				Object[] args = compactizer.getArguments();
 				String apiUrl = compactizer.getApiUrl();
 				Assert.assertEquals(7, args.length);
 				Assert.assertEquals("1", args[0]);
 				Assert.assertEquals("7", args[6]);
+				return null;
+			}
+
+			@Override
+			protected ListenableFuture<?> doInvoke(TypeHandlingAsyncRestOperations restTemplate,
+				com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker.APICallInfoCompactizer<Annotation> compactizer, Type returnType,
+				Annotation annotation) throws Exception {
 				return null;
 			}
 		};
@@ -224,7 +266,7 @@ public class AbstractRestTemplateInvokerTest {
 			Object[] normalizeArguments = target.normalizeArguments(apiUrl, method, args);
 			System.out.println(ArrayUtils.toString(normalizeArguments, ""));
 
-			target.invoke(null, apiUrl, method, null, args);
+			target.invoke(null, null, apiUrl, method, null, args);
 		} catch (Exception e) {
 			throw e;
 		}
@@ -234,15 +276,22 @@ public class AbstractRestTemplateInvokerTest {
 	public void getRequestURIFromFormTest() throws Exception {
 		AbstractRestTemplateInvoker<Annotation> target = new AbstractRestTemplateInvoker<Annotation>() {
 			@Override
-			protected Object doInvoke(TypeHandlingRestTemplate restTemplate, APICallInfoCompactizer<Annotation> compactizer, Type returnType,
+			protected Object doInvoke(TypeHandlingRestOperations restTemplate, APICallInfoCompactizer<Annotation> compactizer, Type returnType,
 				Annotation annotation)
-				throws Exception {
+					throws Exception {
 				Object[] args = compactizer.getArguments();
 				String apiUrl = compactizer.getApiUrl();
 				Assert.assertEquals(5, args.length);
 				Assert.assertEquals(null, args[0]);
 				Assert.assertEquals("7", args[4]);
 				Assert.assertEquals("/test/{path1}/ddd/ddd/{ path4 }?value5={value5}&value6={value6}&value7={value7}", apiUrl);
+				return null;
+			}
+
+			@Override
+			protected ListenableFuture<?> doInvoke(TypeHandlingAsyncRestOperations restTemplate,
+				com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker.APICallInfoCompactizer<Annotation> compactizer, Type returnType,
+				Annotation annotation) throws Exception {
 				return null;
 			}
 		};
@@ -260,7 +309,7 @@ public class AbstractRestTemplateInvokerTest {
 			Object[] normalizeArguments = target.normalizeArguments(apiUrl, method, args);
 			System.out.println(ArrayUtils.toString(normalizeArguments, ""));
 
-			target.invoke(null, apiUrl, method, null, args);
+			target.invoke(null, null, apiUrl, method, null, args);
 		} catch (Exception e) {
 			throw e;
 		}

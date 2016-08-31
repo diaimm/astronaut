@@ -14,9 +14,11 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.collections.SetUtils;
+import org.springframework.util.concurrent.ListenableFuture;
 
 import com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker;
-import com.diaimm.astronaut.configurer.TypeHandlingRestTemplate;
+import com.diaimm.astronaut.configurer.TypeHandlingAsyncRestOperations;
+import com.diaimm.astronaut.configurer.TypeHandlingRestOperations;
 import com.diaimm.astronaut.configurer.annotations.APIMapping;
 import com.diaimm.astronaut.configurer.annotations.mapping.RequestURI;
 import com.google.common.base.Supplier;
@@ -28,14 +30,21 @@ public @interface GetForObject {
 	@RequestURI
 	String url() default "";
 
-	Class<? extends Supplier<?>> dummySupplier();
+	Class<? extends Supplier<?>>dummySupplier();
 
 	class RestTemplateInvoker extends AbstractRestTemplateInvoker<GetForObject> {
 		@Override
-		protected Object doInvoke(TypeHandlingRestTemplate restTemplate, APICallInfoCompactizer<GetForObject> compactizer, Type returnType,
+		protected Object doInvoke(TypeHandlingRestOperations restTemplate, APICallInfoCompactizer<GetForObject> compactizer, Type returnType,
 			GetForObject annotation)
-			throws Exception {
+				throws Exception {
 			return restTemplate.getForObject(compactizer.getApiUrl(), returnType, compactizer.getArguments());
+		}
+
+		@Override
+		protected ListenableFuture<?> doInvoke(TypeHandlingAsyncRestOperations restTemplate,
+			com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker.APICallInfoCompactizer<GetForObject> compactizer, Type returnType,
+			GetForObject annotation) throws Exception {
+			return restTemplate.getForEntity(compactizer.getApiUrl(), returnType, compactizer.getArguments());
 		}
 	}
 

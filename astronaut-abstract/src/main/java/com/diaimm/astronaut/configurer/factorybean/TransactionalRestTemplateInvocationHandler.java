@@ -9,7 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.diaimm.astronaut.configurer.AnnotationUtilsExt;
-import com.diaimm.astronaut.configurer.TypeHandlingRestTemplate;
+import com.diaimm.astronaut.configurer.TypeHandlingAsyncRestOperations;
+import com.diaimm.astronaut.configurer.TypeHandlingRestOperations;
 import com.diaimm.astronaut.configurer.annotations.APIMapping;
 import com.diaimm.astronaut.configurer.annotations.mapping.Transaction;
 import com.diaimm.astronaut.configurer.transaction.RestTemplateTransactionManager;
@@ -21,9 +22,9 @@ class TransactionalRestTemplateInvocationHandler implements InvocationHandler {
 	private RestTemplateRepositoryInvocationHandler invocationHandler;
 	private RestTemplateTransactionManager transactionManager;
 
-	TransactionalRestTemplateInvocationHandler(TypeHandlingRestTemplate restTemplate, URI apiURI, String pathPrefix,
+	TransactionalRestTemplateInvocationHandler(TypeHandlingRestOperations restTemplate, TypeHandlingAsyncRestOperations asyncRestTemplate, URI apiURI, String pathPrefix,
 		RestTemplateTransactionManager transactionManger) {
-		this(new RestTemplateRepositoryInvocationHandler(restTemplate, apiURI, pathPrefix), transactionManger);
+		this(new RestTemplateRepositoryInvocationHandler(restTemplate, asyncRestTemplate, apiURI, pathPrefix), transactionManger);
 	}
 	
 	TransactionalRestTemplateInvocationHandler(RestTemplateRepositoryInvocationHandler invocationHandler,

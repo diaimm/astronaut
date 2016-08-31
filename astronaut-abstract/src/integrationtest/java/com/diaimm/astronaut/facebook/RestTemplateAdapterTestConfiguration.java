@@ -14,10 +14,12 @@ import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.converter.xml.Jaxb2RootElementHttpMessageConverter;
 
+import com.diaimm.astronaut.configurer.DefaultTypeHandlingAsyncRestTemplate;
 import com.diaimm.astronaut.configurer.DefaultTypeHandlingRestTemplateImpl;
 import com.diaimm.astronaut.configurer.RestTemplateAdapterLoader;
 import com.diaimm.astronaut.configurer.RestTemplateAdapterLoader.Version;
-import com.diaimm.astronaut.configurer.TypeHandlingRestTemplate;
+import com.diaimm.astronaut.configurer.TypeHandlingAsyncRestOperations;
+import com.diaimm.astronaut.configurer.TypeHandlingRestOperations;
 import com.diaimm.astronaut.configurer.transaction.RestTemplateTransactionManager;
 import com.diaimm.astronaut.facebook.repositories.FaceBookRepositoriesScanningBase;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -45,7 +47,7 @@ public class RestTemplateAdapterTestConfiguration {
 			public String getApiPrefix() {
 				return "/v2.7";
 			}
-		}, "apiURIPropertyKey", "facebook2.7", "sampleRestTemplate", restTemplateTransactionManager, FaceBookRepositoriesScanningBase.class);
+		}, "apiURIPropertyKey", "facebook2.7", "sampleRestTemplate", "sampleAsyncRestTemplate", restTemplateTransactionManager, FaceBookRepositoriesScanningBase.class);
 	}
 
 	@Bean
@@ -54,7 +56,7 @@ public class RestTemplateAdapterTestConfiguration {
 	}
 
 	@Bean
-	public TypeHandlingRestTemplate sampleRestTemplate() {
+	public TypeHandlingRestOperations sampleRestTemplate() {
 		List<Header> defaultHeaders = Lists.newArrayList();
 //		defaultHeaders.add(new BasicHeader("user-agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.82 Safari/537.36"));
 //		defaultHeaders.add(new BasicHeader("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"));
@@ -63,6 +65,11 @@ public class RestTemplateAdapterTestConfiguration {
 		result.setMessageConverters(httpMessageConverters());
 
 		return result;
+	}
+	
+	@Bean
+	public TypeHandlingAsyncRestOperations sampleAsyncRestTemplate(TypeHandlingRestOperations sampleRestTemplate){
+		return new DefaultTypeHandlingAsyncRestTemplate(sampleRestTemplate);
 	}
 
 	public List<HttpMessageConverter<?>> httpMessageConverters() {

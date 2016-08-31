@@ -9,29 +9,33 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.net.URI;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.springframework.scheduling.annotation.AsyncResult;
+import org.springframework.util.concurrent.ListenableFuture;
 
 import com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker;
 import com.diaimm.astronaut.configurer.RestTemplateInvoker;
-import com.diaimm.astronaut.configurer.TypeHandlingRestTemplate;
+import com.diaimm.astronaut.configurer.TypeHandlingAsyncRestOperations;
+import com.diaimm.astronaut.configurer.TypeHandlingRestOperations;
 import com.diaimm.astronaut.configurer.annotations.APIMapping;
 import com.diaimm.astronaut.configurer.annotations.mapping.RequestURI;
 import com.diaimm.astronaut.configurer.factorybean.RestTemplateRepositoryInvocationHandler.RestTemplateInvokerCache;
 import com.google.common.base.Supplier;
 
-import junit.framework.Assert;
-
 public class RestTemplateRepositoryInvocationHandlerTest {
 	@Test
 	public void invokeTest() throws Exception {
-		TypeHandlingRestTemplate restTemplate = Mockito.mock(TypeHandlingRestTemplate.class);
+		TypeHandlingRestOperations restTemplate = Mockito.mock(TypeHandlingRestOperations.class);
+		TypeHandlingAsyncRestOperations asyncRestTemplate = Mockito.mock(TypeHandlingAsyncRestOperations.class);
 		String apiURLPrefix = "http://this.is.url.prefix";
 		URI uri = new URI("/and/this/is/the/path");
-		RestTemplateRepositoryInvocationHandler target = new RestTemplateRepositoryInvocationHandler(restTemplate, uri, apiURLPrefix);
+		RestTemplateRepositoryInvocationHandler target = new RestTemplateRepositoryInvocationHandler(restTemplate, asyncRestTemplate, uri,
+			apiURLPrefix);
 
 		Method someMethod = SomeRepository.class.getDeclaredMethod("someMethod2", String.class);
-		Object invoked = target.invoke(new Object(), someMethod, new Object[]{"uri sample"});
+		Object invoked = target.invoke(new Object(), someMethod, new Object[] { "uri sample" });
 		Assert.assertEquals("sampleReturn", invoked);
 	}
 
@@ -78,10 +82,17 @@ public class RestTemplateRepositoryInvocationHandlerTest {
 
 	private static class RestTemplateInvokerSample extends AbstractRestTemplateInvoker<APICallerSample> {
 		@Override
-		protected Object doInvoke(TypeHandlingRestTemplate restTemplate,
+		protected Object doInvoke(TypeHandlingRestOperations restTemplate,
 			com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker.APICallInfoCompactizer<APICallerSample> compactizer, Type returnType,
 			APICallerSample annotation) throws Exception {
 			return "sampleReturn";
+		}
+
+		@Override
+		protected ListenableFuture<?> doInvoke(TypeHandlingAsyncRestOperations restTemplate,
+			com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker.APICallInfoCompactizer<APICallerSample> compactizer, Type returnType,
+			APICallerSample annotation) throws Exception {
+			return new AsyncResult<String>("sampleReturn");
 		}
 	}
 }

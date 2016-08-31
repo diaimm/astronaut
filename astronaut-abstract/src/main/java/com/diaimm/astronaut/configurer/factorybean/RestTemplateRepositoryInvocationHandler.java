@@ -17,7 +17,8 @@ import org.slf4j.LoggerFactory;
 import com.diaimm.astronaut.configurer.APIArgumentNormalizer;
 import com.diaimm.astronaut.configurer.AnnotationUtilsExt;
 import com.diaimm.astronaut.configurer.RestTemplateInvoker;
-import com.diaimm.astronaut.configurer.TypeHandlingRestTemplate;
+import com.diaimm.astronaut.configurer.TypeHandlingAsyncRestOperations;
+import com.diaimm.astronaut.configurer.TypeHandlingRestOperations;
 import com.diaimm.astronaut.configurer.annotations.APIMapping;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,12 +28,14 @@ import com.google.common.collect.Maps;
 @SuppressWarnings({ "rawtypes", "unchecked" })
 class RestTemplateRepositoryInvocationHandler implements InvocationHandler {
 	private static final Logger log = LoggerFactory.getLogger(RestTemplateRepositoryInvocationHandler.class);
-	private TypeHandlingRestTemplate restTemplate;
+	private TypeHandlingRestOperations restTemplate;
+	private TypeHandlingAsyncRestOperations asyncRestTemplate;
 	private String apiURLPrefix;
 
-	RestTemplateRepositoryInvocationHandler(TypeHandlingRestTemplate restTemplate, URI apiURI, String pathPrefix) {
+	RestTemplateRepositoryInvocationHandler(TypeHandlingRestOperations restTemplate, TypeHandlingAsyncRestOperations asyncRestTemplate, URI apiURI, String pathPrefix) {
 		this.apiURLPrefix = apiURI + pathPrefix;
 		this.restTemplate = restTemplate;
+		this.asyncRestTemplate = asyncRestTemplate;
 	}
 
 	@Override
@@ -50,7 +53,7 @@ class RestTemplateRepositoryInvocationHandler implements InvocationHandler {
 			RestTemplateInvoker invokerInstance = RestTemplateInvokerCache.getInvokerInstance(annotationType,
 				annotationType.getAnnotation(APIMapping.class));
 			String apiURL = apiURLPrefix + invokerInstance.extractAPIUrl(annotation, method, args);
-			return invokerInstance.invoke(restTemplate, apiURL, method, annotation, args);
+			return invokerInstance.invoke(restTemplate, asyncRestTemplate, apiURL, method, annotation, args);
 		} catch (Exception e) {
 			log.debug(e.getMessage(), e);
 			throw new IllegalStateException(e);
@@ -119,7 +122,7 @@ class RestTemplateRepositoryInvocationHandler implements InvocationHandler {
 		return this.apiURLPrefix;
 	}
 
-	TypeHandlingRestTemplate getRestTemplate() {
+	TypeHandlingRestOperations getRestTemplate() {
 		return this.restTemplate;
 	}
 }

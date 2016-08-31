@@ -25,7 +25,8 @@ public class RestTemplateAdapterTestConfiguration {
 			public String getApiPrefix() {
 				return "/v1";
 			}
-		}, "apiURIPropertyKey", "resourceName", "sampleRestTemplate", restTemplateTransactionManager, RepositoryToScanBase.class);
+		}, "apiURIPropertyKey", "resourceName", "sampleRestTemplate", "sampleAsyncRestTemplate", restTemplateTransactionManager,
+			RepositoryToScanBase.class);
 	}
 
 	@Bean
@@ -34,7 +35,12 @@ public class RestTemplateAdapterTestConfiguration {
 	}
 
 	@Bean
-	public TypeHandlingRestTemplate sampleRestTemplate() {
+	public TypeHandlingRestOperations sampleRestTemplate() {
 		return new DefaultTypeHandlingRestTemplateImpl(300, 100, 100, 10, Lists.<Header> newArrayList());
+	}
+
+	@Bean
+	public TypeHandlingAsyncRestOperations sampleAsyncRestTemplate(TypeHandlingRestOperations sampleRestTemplate) {
+		return new DefaultTypeHandlingAsyncRestTemplate(sampleRestTemplate);
 	}
 }

@@ -8,7 +8,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.diaimm.astronaut.configurer.TypeHandlingRestTemplate;
+import com.diaimm.astronaut.configurer.TypeHandlingRestOperations;
 import com.diaimm.astronaut.configurer.transaction.RestTemplateTransactionManager;
 import com.diaimm.astronaut.configurer.transaction.RestTemplateTransactionObject;
 import com.diaimm.astronaut.configurer.transaction.RestTemplateTransactionObject.TransactionCommand;
@@ -20,7 +20,7 @@ public class TransactionalRestTemplateInvocationHandlerTest {
 		RestTemplateTransactionManager transactionManager = Mockito.mock(RestTemplateTransactionManager.class);
 		RestTemplateRepositoryInvocationHandler invocationHandler = Mockito.mock(RestTemplateRepositoryInvocationHandler.class);
 		
-		Mockito.when(invocationHandler.getRestTemplate()).thenReturn(Mockito.mock(TypeHandlingRestTemplate.class));
+		Mockito.when(invocationHandler.getRestTemplate()).thenReturn(Mockito.mock(TypeHandlingRestOperations.class));
 
 		Method method = SampleClass.class.getDeclaredMethod("testMethod");
 		method.setAccessible(true);

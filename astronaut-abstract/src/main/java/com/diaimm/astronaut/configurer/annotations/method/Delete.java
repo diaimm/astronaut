@@ -6,9 +6,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Type;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.concurrent.ListenableFuture;
+
 import com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker;
 import com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker.APICallInfoCompactizer;
-import com.diaimm.astronaut.configurer.TypeHandlingRestTemplate;
+import com.diaimm.astronaut.configurer.TypeHandlingAsyncRestOperations;
+import com.diaimm.astronaut.configurer.TypeHandlingRestOperations;
 import com.diaimm.astronaut.configurer.annotations.APIMapping;
 import com.diaimm.astronaut.configurer.annotations.mapping.RequestURI;
 
@@ -21,10 +25,17 @@ public @interface Delete {
 
 	class RestTemplateInvoker extends AbstractRestTemplateInvoker<Delete> {
 		@Override
-		protected Object doInvoke(TypeHandlingRestTemplate restTemplate, APICallInfoCompactizer<Delete> compactizer, Type returnType, Delete annotation)
+		protected Object doInvoke(TypeHandlingRestOperations restTemplate, APICallInfoCompactizer<Delete> compactizer, Type returnType, Delete annotation)
 			throws Exception {
 			restTemplate.delete(compactizer.getApiUrl(), compactizer.getArguments());
 			return true;
+		}
+
+		@Override
+		protected ListenableFuture<?> doInvoke(TypeHandlingAsyncRestOperations restTemplate,
+			com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker.APICallInfoCompactizer<Delete> compactizer, Type returnType,
+			Delete annotation) throws Exception {
+			return restTemplate.delete(compactizer.getApiUrl(), compactizer.getArguments());
 		}
 	}
 }

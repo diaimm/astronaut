@@ -22,7 +22,7 @@ import org.springframework.web.client.RequestCallback;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-public class DefaultTypeHandlingRestTemplateImpl extends RestTemplate implements TypeHandlingRestTemplate {
+public class DefaultTypeHandlingRestTemplateImpl extends RestTemplate implements TypeHandlingRestOperations {
 	private final List<Header> defaultHeaders;
 	private final int connectTimeout;
 	private final int readTimeout;
@@ -61,25 +61,12 @@ public class DefaultTypeHandlingRestTemplateImpl extends RestTemplate implements
 		return execute(url, HttpMethod.GET, requestCallback, responseExtractor, urlVariables);
 	}
 
-	@Override
-	public <T> T putForObject(String url, Object request, Type responseType, Object... uriVariables) {
-		HttpEntityRequestCallback requestCallback = new HttpEntityRequestCallback(request, responseType);
-		HttpMessageConverterExtractor<T> responseExtractor = new HttpMessageConverterExtractor<T>(responseType, getMessageConverters());
-		return execute(url, HttpMethod.PUT, requestCallback, responseExtractor, uriVariables);
+	public RequestCallback acceptHeaderRequestCallback(Type responseType) {
+		return new AcceptHeaderRequestCallback(responseType);
 	}
 
-	@Override
-	public <T> T put(String url, Object request, Type responseType, Object... uriVariables) {
-		HttpEntityRequestCallback requestCallback = new HttpEntityRequestCallback(request, responseType);
-		HttpMessageConverterExtractor<T> responseExtractor = new HttpMessageConverterExtractor<T>(responseType, getMessageConverters());
-		return execute(url, HttpMethod.PUT, requestCallback, responseExtractor, uriVariables);
-	}
-
-	@Override
-	public <T> T deleteForObject(String url, Object request, Type responseType, Object... uriVariables) {
-		HttpEntityRequestCallback requestCallback = new HttpEntityRequestCallback(request, responseType);
-		HttpMessageConverterExtractor<T> responseExtractor = new HttpMessageConverterExtractor<T>(responseType, getMessageConverters());
-		return execute(url, HttpMethod.DELETE, requestCallback, responseExtractor, uriVariables);
+	public RequestCallback httpEntityCallback(HttpEntity<?> requestBody, Type responseType) {
+		return new HttpEntityRequestCallback(requestBody, responseType);
 	}
 
 	/**
@@ -87,7 +74,6 @@ public class DefaultTypeHandlingRestTemplateImpl extends RestTemplate implements
 	 * headers.
 	 */
 	private class AcceptHeaderRequestCallback implements RequestCallback {
-
 		private final Type responseType;
 
 		private AcceptHeaderRequestCallback(Type responseType) {
@@ -107,10 +93,10 @@ public class DefaultTypeHandlingRestTemplateImpl extends RestTemplate implements
 						if (converter.canRead(responseClass, null)) {
 							allSupportedMediaTypes.addAll(getSupportedMediaTypes(converter));
 						}
-						
+
 						continue;
-					} 
-					
+					}
+
 					if (converter instanceof GenericHttpMessageConverter) {
 						GenericHttpMessageConverter<?> genericConverter = (GenericHttpMessageConverter<?>) converter;
 						if (genericConverter.canRead(responseType, null, null)) {
@@ -159,13 +145,13 @@ public class DefaultTypeHandlingRestTemplateImpl extends RestTemplate implements
 			if (requestBody instanceof HttpEntity) {
 				this.requestEntity = (HttpEntity<?>) requestBody;
 				return;
-			} 
-			
+			}
+
 			if (requestBody != null) {
 				this.requestEntity = new HttpEntity<Object>(requestBody);
 				return;
 			}
-			
+
 			this.requestEntity = HttpEntity.EMPTY;
 		}
 
@@ -180,11 +166,11 @@ public class DefaultTypeHandlingRestTemplateImpl extends RestTemplate implements
 				if (!requestHeaders.isEmpty()) {
 					httpHeaders.putAll(requestHeaders);
 				}
-				
+
 				if (httpHeaders.getContentLength() == -1) {
 					httpHeaders.setContentLength(0L);
 				}
-				
+
 				return;
 			}
 
@@ -196,11 +182,11 @@ public class DefaultTypeHandlingRestTemplateImpl extends RestTemplate implements
 				if (!messageConverter.canWrite(requestType, requestContentType)) {
 					continue;
 				}
-				
+
 				if (!requestHeaders.isEmpty()) {
 					httpRequest.getHeaders().putAll(requestHeaders);
 				}
-				
+
 				if (logger.isDebugEnabled()) {
 					if (requestContentType != null) {
 						logger.debug("Writing [" + requestBody + "] as \"" + requestContentType + "\" using [" + messageConverter + "]");
@@ -209,11 +195,11 @@ public class DefaultTypeHandlingRestTemplateImpl extends RestTemplate implements
 					}
 
 				}
-				
+
 				((HttpMessageConverter<Object>) messageConverter).write(requestBody, requestContentType, httpRequest);
 				return;
 			}
-			
+
 			String message = "Could not write request: no suitable HttpMessageConverter found for request type [" + requestType.getName() + "]";
 			if (requestContentType != null) {
 				message += " and content type [" + requestContentType + "]";

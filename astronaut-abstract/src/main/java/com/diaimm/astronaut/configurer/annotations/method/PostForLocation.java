@@ -7,8 +7,12 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Type;
 import java.net.URI;
 
+import org.springframework.http.HttpEntity;
+import org.springframework.util.concurrent.ListenableFuture;
+
 import com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker;
-import com.diaimm.astronaut.configurer.TypeHandlingRestTemplate;
+import com.diaimm.astronaut.configurer.TypeHandlingAsyncRestOperations;
+import com.diaimm.astronaut.configurer.TypeHandlingRestOperations;
 import com.diaimm.astronaut.configurer.annotations.APIMapping;
 import com.diaimm.astronaut.configurer.annotations.mapping.RequestURI;
 
@@ -21,14 +25,24 @@ public @interface PostForLocation {
 
 	class RestTemplateInvoker extends AbstractRestTemplateInvoker<PostForLocation> {
 		@Override
-		protected URI doInvoke(TypeHandlingRestTemplate restTemplate, APICallInfoCompactizer<PostForLocation> compactizer, Type returnType,
+		protected URI doInvoke(TypeHandlingRestOperations restTemplate, APICallInfoCompactizer<PostForLocation> compactizer, Type returnType,
 			PostForLocation annotation)
-			throws Exception {
+				throws Exception {
 			String apiUrl = compactizer.getApiUrl();
 			Object[] arguments = compactizer.getArguments();
 			Object postBody = compactizer.getPostBody();
 
 			return restTemplate.postForLocation((String) apiUrl, (Object) postBody, (Object[]) arguments);
+		}
+
+		@Override
+		protected ListenableFuture<?> doInvoke(TypeHandlingAsyncRestOperations restTemplate,
+			com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker.APICallInfoCompactizer<PostForLocation> compactizer, Type returnType,
+			PostForLocation annotation) throws Exception {
+			String apiUrl = compactizer.getApiUrl();
+			Object[] arguments = compactizer.getArguments();
+			Object postBody = compactizer.getPostBody();
+			return restTemplate.postForLocation((String) apiUrl, new HttpEntity<>(postBody), (Object[]) arguments);
 		}
 	}
 }

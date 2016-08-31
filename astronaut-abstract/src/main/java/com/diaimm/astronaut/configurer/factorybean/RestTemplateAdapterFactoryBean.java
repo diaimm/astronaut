@@ -14,7 +14,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 
 import com.diaimm.astronaut.configurer.RestTemplateAdapterLoader.Version;
-import com.diaimm.astronaut.configurer.TypeHandlingRestTemplate;
+import com.diaimm.astronaut.configurer.TypeHandlingAsyncRestOperations;
+import com.diaimm.astronaut.configurer.TypeHandlingRestOperations;
 import com.diaimm.astronaut.configurer.transaction.RestTemplateTransactionManager;
 
 public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
@@ -27,13 +28,15 @@ public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
 	private final Version version;
 	private final Class<T> target;
 	private final String restTemplateName;
+	private final String asyncRestTemplateName;
 	private RestTemplateTransactionManager transactionManger;
 
-	public RestTemplateAdapterFactoryBean(Version version, String apiURIPropertyKey, String restTemplateName, Class<T> target,
-		RestTemplateTransactionManager transactionManger) {
+	public RestTemplateAdapterFactoryBean(Version version, String apiURIPropertyKey, String restTemplateName, String asyncRestTemplateName,
+		Class<T> target, RestTemplateTransactionManager transactionManger) {
 		this.version = version;
 		this.apiURIPropertyKey = apiURIPropertyKey;
 		this.restTemplateName = restTemplateName;
+		this.asyncRestTemplateName = asyncRestTemplateName;
 		this.target = target;
 		this.transactionManger = transactionManger;
 	}
@@ -56,8 +59,10 @@ public class RestTemplateAdapterFactoryBean<T> implements FactoryBean<T> {
 
 	@PostConstruct
 	private void init() throws URISyntaxException {
-		TypeHandlingRestTemplate restTemplate = applicationContext.getBean(restTemplateName, TypeHandlingRestTemplate.class);
-		this.invocationHandler = new TransactionalRestTemplateInvocationHandler(restTemplate, getAPIUrl(), version.getApiPrefix(), transactionManger);
+		TypeHandlingRestOperations restTemplate = applicationContext.getBean(restTemplateName, TypeHandlingRestOperations.class);
+		TypeHandlingAsyncRestOperations asyncRestTemplate = applicationContext.getBean(asyncRestTemplateName, TypeHandlingAsyncRestOperations.class);
+		this.invocationHandler = new TransactionalRestTemplateInvocationHandler(restTemplate, asyncRestTemplate, getAPIUrl(), version.getApiPrefix(),
+			transactionManger);
 	}
 
 	private URI getAPIUrl() throws URISyntaxException {
