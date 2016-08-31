@@ -1,6 +1,7 @@
 # *Astronaut*
 [![Home](https://i.stack.imgur.com/eoNf5.png)](https://github.com/diaimm/astronaut/wiki "Github Wiki")
 [![Travis CI](https://travis-ci.org/diaimm/astronaut.svg?branch=master)](https://travis-ci.org/diaimm/astronaut "master")
+[![codecov](https://codecov.io/gh/diaimm/astronaut/branch/master/graph/badge.svg)](https://codecov.io/gh/diaimm/astronaut)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.esotericsoftware/kryo/badge.svg)](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.github.diaimm%22%20AND%20a%3Aastronaut-abstract)
 
 Astronaut is a client builder abstraction for Rest API Call.
