@@ -117,9 +117,6 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 
 	private void processParamAnnotatedArgument(List<ParamConfig> result, Annotation[] annotations) {
 		Optional<Param> param = AnnotationUtilsExt.find(annotations, Param.class);
-		if (!param.isPresent()) {
-			return;
-		}
 		result.add(new ParamConfig(param.get().value(), param.get().value()));
 	}
 
@@ -213,7 +210,6 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 
 						addAPIArgumentNormalizer(normalizerType, declaredConstructor.newInstance());
 					} catch (Exception e) {
-						addAPIArgumentNormalizer(normalizerType, null);
 						throw new IllegalStateException("cannot create " + normalizerType + " instance. - No Default Constructor exists.", e);
 					}
 				}
@@ -224,8 +220,7 @@ public abstract class AbstractRestTemplateInvoker<T extends Annotation> implemen
 	}
 
 	Object[] normalizeArguments(String apiUrl, Method method, Object[] args)
-		throws NoSuchFieldException, IllegalAccessException, JsonGenerationException,
-		JsonMappingException, IOException {
+		throws NoSuchFieldException, IllegalAccessException, JsonGenerationException, JsonMappingException, IOException {
 		if (ArrayUtils.isEmpty(args)) {
 			return args;
 		}

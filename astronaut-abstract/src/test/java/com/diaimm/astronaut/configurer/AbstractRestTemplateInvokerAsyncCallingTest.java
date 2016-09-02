@@ -18,7 +18,7 @@ import com.diaimm.astronaut.configurer.annotations.mapping.RequestURI;
 import com.diaimm.astronaut.configurer.annotations.method.GetForObject;
 import com.google.common.base.Supplier;
 
-public class AbstractRestTemplateInvokerTest {
+public class AbstractRestTemplateInvokerAsyncCallingTest {
 	@Test
 	public void matchTest1() {
 		String sample = "{param1}";
@@ -129,13 +129,6 @@ public class AbstractRestTemplateInvokerTest {
 				return null;
 			}
 		};
-
-		target.addAPIArgumentNormalizer(String.class, new APIArgumentNormalizer<String>() {
-			@Override
-			public Object normalize(String value) {
-				return value;
-			}
-		});
 
 		try {
 			SampleParam sampleParam = new SampleParam(new StringBuilder("/test/{path1}/ddd/ddd/{ path4 }"));
@@ -320,62 +313,6 @@ public class AbstractRestTemplateInvokerTest {
 			throw e;
 		}
 	}
-	
-	@Test
-	public void sampleMethodWithBadNormalizerTest(){
-		AbstractRestTemplateInvoker<Annotation> target = makeTestTargetClass();
-
-		try {
-			Object[] args = new Object[] { new SampleParam(new StringBuilder("/test/{path1}/ddd/{ !path2}/ddd/{!path3 }/{ path4 }")) };
-			Method method = SampleClass.class.getDeclaredMethod("sampleMethodWithBadNormalizer", String.class);
-			GetForObject annotation = method.getAnnotation(GetForObject.class);
-			String apiURL = target.extractAPIUrl(annotation, method, args);
-			target.normalizeArguments(apiURL, method, args);
-			Assert.fail();
-		} catch (Exception e) {
-			Assert.assertEquals(IllegalStateException.class, e.getClass());
-			Assert.assertEquals("cannot create " + BadStringNormalizer.class + " instance. - No Default Constructor exists.", e.getMessage());
-		}
-	}
-
-	private AbstractRestTemplateInvoker<Annotation> makeTestTargetClass() {
-		AbstractRestTemplateInvoker<Annotation> target = new AbstractRestTemplateInvoker<Annotation>() {
-			@Override
-			protected Object doInvoke(TypeHandlingRestOperations restTemplate, APICallInfoCompactizer<Annotation> compactizer, Type returnType,
-				Annotation annotation)
-					throws Exception {
-				Object[] args = compactizer.getArguments();
-				Assert.assertEquals(7, args.length);
-				Assert.assertEquals("1", args[0]);
-				Assert.assertEquals("7", args[6]);
-				return null;
-			}
-
-			@Override
-			protected ListenableFuture<?> doInvoke(TypeHandlingAsyncRestOperations restTemplate,
-				com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker.APICallInfoCompactizer<Annotation> compactizer, Type returnType,
-				Annotation annotation) throws Exception {
-				return null;
-			}
-		};
-		return target;
-	}
-	
-	@Test
-	public void normalizeArgumentsWithEmptyArgsTest(){
-		AbstractRestTemplateInvoker<Annotation> target = makeTestTargetClass();
-		try {
-			Object[] args = new Object[] { new SampleParam(new StringBuilder("/test/{path1}/ddd/{ !path2}/ddd/{!path3 }/{ path4 }")) };
-			Method method = SampleClass.class.getDeclaredMethod("sampleMethodWithBadNormalizer", String.class);
-			GetForObject annotation = method.getAnnotation(GetForObject.class);
-			String apiURL = target.extractAPIUrl(annotation, method, args);
-
-			Assert.assertEquals(0, target.normalizeArguments(apiURL, method, new Object[0]).length);
-			Assert.assertNull(target.normalizeArguments(apiURL, method, null));
-		} catch (Exception e) {
-			Assert.fail();
-		}
-	}
 
 	@Test
 	public void sampleMethodWithTooManyParamsTest() {
@@ -411,35 +348,22 @@ public class AbstractRestTemplateInvokerTest {
 		}
 	}
 
-	private static class BadStringNormalizer implements APIArgumentNormalizer<String> {
-		private BadStringNormalizer(String value) {
-		}
-
-		@Override
-		public Object normalize(String value) {
-			return value;
-		}
-	}
-
 	public static interface SampleClass {
 		@GetForObject(url = "/test/{path1}/ddd/{ !path2}/ddd/{!path3 }/{ path4 }", dummySupplier = SampleParamSupplier.class)
-		public APIResponse<?> sampleMethodWithBadNormalizer(@Param(normalizer = BadStringNormalizer.class) String secondArg);
+		public AsyncAPIResponse<?> sampleMethodWithTooManyParams(@Form SampleParam param, String secondArg);
 
 		@GetForObject(url = "/test/{path1}/ddd/{ !path2}/ddd/{!path3 }/{ path4 }", dummySupplier = SampleParamSupplier.class)
-		public APIResponse<?> sampleMethodWithTooManyParams(@Form SampleParam param, String secondArg);
-
-		@GetForObject(url = "/test/{path1}/ddd/{ !path2}/ddd/{!path3 }/{ path4 }", dummySupplier = SampleParamSupplier.class)
-		public void sampleMethod(@Form SampleParam param);
+		public AsyncAPIResponse<?> sampleMethod(@Form SampleParam param);
 
 		@GetForObject(url = "/test/{p1}/ddd/{!p2}/ddd/{!p3}/{ p4 }", dummySupplier = SampleParamSupplier.class)
-		public void sampleMethod2(@PathParam("p1") String path1, @PathParam("p2") String path2, @PathParam("p3") String path3,
+		public AsyncAPIResponse<?> sampleMethod2(@PathParam("p1") String path1, @PathParam("p2") String path2, @PathParam("p3") String path3,
 			@PathParam("p4") String path4, @Param("param1") String param1, @Param("param2") String param2, @Param("param3") String param3);
 
 		@GetForObject(dummySupplier = SampleParamSupplier.class)
-		public void sampleMethod3(@Form SampleParam param);
+		public AsyncAPIResponse<?> sampleMethod3(@Form SampleParam param);
 
 		@GetForObject(dummySupplier = SampleParamSupplier.class)
-		public void sampleMethod4(@RequestURI StringBuilder requestURI, @PathParam("p1") String path1, @PathParam("p2") String path2,
+		public AsyncAPIResponse<?> sampleMethod4(@RequestURI StringBuilder requestURI, @PathParam("p1") String path1, @PathParam("p2") String path2,
 			@PathParam("p3") String path3, @PathParam("p4") String path4, @Param("param1") String param1, @Param("param2") String param2,
 			@Param("param3") String param3);
 	}

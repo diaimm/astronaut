@@ -25,37 +25,37 @@ import org.springframework.util.concurrent.SuccessCallback;
  * @param <T>
  */
 public class AsyncAPIResponse<T> {
-	private ListenableFuture<ResponseEntity<T>> implict;
+	private ListenableFuture<ResponseEntity<T>> implicit;
 
 	public AsyncAPIResponse(ListenableFuture<ResponseEntity<T>> implict){
-		this.implict = implict;
+		this.implicit = implict;
 	}
 	
 	public boolean cancel(boolean mayInterruptIfRunning) {
-		return implict.cancel(mayInterruptIfRunning);
+		return implicit.cancel(mayInterruptIfRunning);
 	}
 
 	public boolean isCancelled() {
-		return implict.isCancelled();
+		return implicit.isCancelled();
 	}
 
 	public boolean isDone() {
-		return implict.isDone();
+		return implicit.isDone();
 	}
 
 	public T get() throws InterruptedException, ExecutionException {
-		return implict.get().getBody();
+		return implicit.get().getBody();
 	}
 
 	public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-		return implict.get(timeout, unit).getBody();
+		return implicit.get(timeout, unit).getBody();
 	}
 
 	public void addCallback(ListenableFutureCallback<? super ResponseEntity<T>> callback) {
-		implict.addCallback(callback);
+		implicit.addCallback(callback);
 	}
 
 	public void addCallback(SuccessCallback<? super ResponseEntity<T>> successCallback, FailureCallback failureCallback) {
-		implict.addCallback(successCallback, failureCallback);
+		implicit.addCallback(successCallback, failureCallback);
 	}
 }
