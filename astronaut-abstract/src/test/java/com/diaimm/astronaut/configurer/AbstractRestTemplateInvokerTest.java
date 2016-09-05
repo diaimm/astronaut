@@ -320,9 +320,28 @@ public class AbstractRestTemplateInvokerTest {
 			throw e;
 		}
 	}
-	
+
 	@Test
-	public void sampleMethodWithBadNormalizerTest(){
+	public void sampleMethodWithGoodCustomNormalizerTest() {
+		AbstractRestTemplateInvoker<Annotation> target = makeTestTargetClass();
+
+		try {
+			Object[] args = new Object[] { "testValue" };
+			Method method = SampleClass.class.getDeclaredMethod("sampleMethodWithGoodCustomNormalizer", String.class);
+			GetForObject annotation = method.getAnnotation(GetForObject.class);
+			String apiURL = target.extractAPIUrl(annotation, method, args);
+			Object[] normalizeArguments = target.normalizeArguments(apiURL, method, args);
+			Assert.assertEquals("testValue is testValue", normalizeArguments[0]);
+			// to use cache
+			normalizeArguments = target.normalizeArguments(apiURL, method, args);
+			Assert.assertEquals("testValue is testValue", normalizeArguments[0]);
+		} catch (Exception e) {
+			Assert.fail();
+		}
+	}
+
+	@Test
+	public void sampleMethodWithBadNormalizerTest() {
 		AbstractRestTemplateInvoker<Annotation> target = makeTestTargetClass();
 
 		try {
@@ -360,9 +379,9 @@ public class AbstractRestTemplateInvokerTest {
 		};
 		return target;
 	}
-	
+
 	@Test
-	public void normalizeArgumentsWithEmptyArgsTest(){
+	public void normalizeArgumentsWithEmptyArgsTest() {
 		AbstractRestTemplateInvoker<Annotation> target = makeTestTargetClass();
 		try {
 			Object[] args = new Object[] { new SampleParam(new StringBuilder("/test/{path1}/ddd/{ !path2}/ddd/{!path3 }/{ path4 }")) };
@@ -411,6 +430,13 @@ public class AbstractRestTemplateInvokerTest {
 		}
 	}
 
+	private static class GoodStringNormalizer implements APIArgumentNormalizer<String> {
+		@Override
+		public Object normalize(String value) {
+			return value + " is " + value;
+		}
+	}
+
 	private static class BadStringNormalizer implements APIArgumentNormalizer<String> {
 		private BadStringNormalizer(String value) {
 		}
@@ -424,6 +450,9 @@ public class AbstractRestTemplateInvokerTest {
 	public static interface SampleClass {
 		@GetForObject(url = "/test/{path1}/ddd/{ !path2}/ddd/{!path3 }/{ path4 }", dummySupplier = SampleParamSupplier.class)
 		public APIResponse<?> sampleMethodWithBadNormalizer(@Param(normalizer = BadStringNormalizer.class) String secondArg);
+
+		@GetForObject(url = "/test/{path1}/ddd/{ !path2}/ddd/{!path3 }/{ path4 }", dummySupplier = SampleParamSupplier.class)
+		public APIResponse<?> sampleMethodWithGoodCustomNormalizer(@Param(normalizer = GoodStringNormalizer.class) String secondArg);
 
 		@GetForObject(url = "/test/{path1}/ddd/{ !path2}/ddd/{!path3 }/{ path4 }", dummySupplier = SampleParamSupplier.class)
 		public APIResponse<?> sampleMethodWithTooManyParams(@Form SampleParam param, String secondArg);
