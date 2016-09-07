@@ -2,7 +2,12 @@ package com.diaimm.astronaut.configurer.annotations.method;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.List;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.ListUtils;
+import org.apache.commons.collections.MapUtils;
+import org.apache.commons.collections.SetUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,16 +23,82 @@ import com.diaimm.astronaut.configurer.AnnotationUtilsExt;
 import com.diaimm.astronaut.configurer.RestTemplateAdapterTestConfiguration;
 import com.diaimm.astronaut.configurer.TypeHandlingAsyncRestOperations;
 import com.diaimm.astronaut.configurer.TypeHandlingRestOperations;
+import com.diaimm.astronaut.configurer.annotations.method.GetForObject.DummyBooleanSupplier;
+import com.diaimm.astronaut.configurer.annotations.method.GetForObject.DummyCollectionSupplier;
+import com.diaimm.astronaut.configurer.annotations.method.GetForObject.DummyListSupplier;
+import com.diaimm.astronaut.configurer.annotations.method.GetForObject.DummyLongSupplier;
+import com.diaimm.astronaut.configurer.annotations.method.GetForObject.DummyMapSupplier;
+import com.diaimm.astronaut.configurer.annotations.method.GetForObject.DummyObjectSupplier;
+import com.diaimm.astronaut.configurer.annotations.method.GetForObject.DummyPageResponseSupplier;
+import com.diaimm.astronaut.configurer.annotations.method.GetForObject.DummySetSupplier;
+import com.diaimm.astronaut.configurer.annotations.method.GetForObject.PageResponse;
 import com.diaimm.astronaut.configurer.repositoriesToScan.methodtest.ComplexParamDTO;
 import com.diaimm.astronaut.configurer.repositoriesToScan.methodtest.GetForObjectRepository;
 import com.diaimm.astronaut.configurer.repositoriesToScan.methodtest.GetForObjectRepository.SampleResponse;
 import com.diaimm.astronaut.configurer.repositoriesToScan.methodtest.PathParamDTO;
+import com.google.common.collect.Lists;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = { RestTemplateAdapterTestConfiguration.class })
 public class GetForObjectTest {
 	@Autowired
 	private GetForObjectRepository getForObjectRepository;
+	
+	@Test
+	public void PageResponseTest(){
+		List<String> orgContents = Lists.<String>newArrayList();
+		
+		PageResponse<String> target = new PageResponse<String>(orgContents, 1, 10, 100);
+		Assert.assertEquals(10, target.getTotalPages());
+		Assert.assertEquals(true, target.hasNextPage());
+		Assert.assertEquals(1, target.getPage());
+		
+		target.setPage(2l);
+		Assert.assertEquals(2, target.getPage());
+
+		Assert.assertEquals(10L, target.getSize());
+		
+		target.setSize(11);
+		Assert.assertEquals(11L, target.getSize());
+		
+		Assert.assertEquals(100L, target.getTotal());
+
+		target.setTotal(110);
+		Assert.assertEquals(110L, target.getTotal());
+		
+		Assert.assertEquals(orgContents, target.getContent());
+
+		List<String> newContents = Lists.<String>newArrayList();
+		target.setContent(newContents);
+		Assert.assertEquals(newContents, target.getContent());
+	}
+	
+	@Test
+	public void dummySuppliersTest(){
+		DummyBooleanSupplier booleanDummy = new DummyBooleanSupplier();
+		Assert.assertEquals(false, booleanDummy.get());
+		
+		DummyLongSupplier longDummy = new DummyLongSupplier();
+		Assert.assertEquals(0L, (long)longDummy.get());
+		
+		DummyObjectSupplier objectDummy = new DummyObjectSupplier();
+		Assert.assertEquals(DummyObjectSupplier.DUMMY, objectDummy.get());
+
+		DummyMapSupplier mapDummy = new DummyMapSupplier();
+		Assert.assertEquals(MapUtils.EMPTY_MAP, mapDummy.get());
+		
+		DummySetSupplier setDummy = new DummySetSupplier();
+		Assert.assertEquals(SetUtils.EMPTY_SET, setDummy.get());
+		
+		DummyListSupplier listDummy = new DummyListSupplier();
+		Assert.assertEquals(ListUtils.EMPTY_LIST, listDummy.get());
+		
+		DummyCollectionSupplier collectionDummy = new DummyCollectionSupplier();
+		Assert.assertEquals(CollectionUtils.EMPTY_COLLECTION, collectionDummy.get());
+		
+		DummyPageResponseSupplier pageDummy = new DummyPageResponseSupplier();
+		Assert.assertEquals(DummyPageResponseSupplier.DUMMY, pageDummy.get());
+	}
 
 	@SuppressWarnings("unchecked")
 	@Test

@@ -19,6 +19,7 @@ import com.diaimm.astronaut.configurer.AnnotationUtilsExt;
 import com.diaimm.astronaut.configurer.RestTemplateAdapterTestConfiguration;
 import com.diaimm.astronaut.configurer.TypeHandlingAsyncRestOperations;
 import com.diaimm.astronaut.configurer.TypeHandlingRestOperations;
+import com.diaimm.astronaut.configurer.annotations.method.HeadForHeaders.DummySupplierImpl;
 import com.diaimm.astronaut.configurer.repositoriesToScan.methodtest.HeadForHeadersRepository;
 import com.diaimm.astronaut.configurer.repositoriesToScan.methodtest.PathParamDTO;
 
@@ -27,6 +28,12 @@ import com.diaimm.astronaut.configurer.repositoriesToScan.methodtest.PathParamDT
 public class HeadForHeadersTest {
 	@Autowired
 	private HeadForHeadersRepository headForHeadersRepository;
+
+	@Test
+	public void dummySupplierImplTest() {
+		DummySupplierImpl target = new DummySupplierImpl();
+		Assert.assertEquals(new HttpHeaders(), target.get());
+	}
 
 	@SuppressWarnings("unchecked")
 	@Test

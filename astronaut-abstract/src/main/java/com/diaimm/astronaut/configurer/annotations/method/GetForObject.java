@@ -101,7 +101,7 @@ public @interface GetForObject {
 
 	class DummyPageResponseSupplier implements Supplier<PageResponse<?>> {
 		@SuppressWarnings({ "rawtypes", "unchecked" })
-		private static final PageResponse<?> DUMMY = new PageResponse(ListUtils.EMPTY_LIST, 0, 0, 0);
+		public static final PageResponse<?> DUMMY = new PageResponse(ListUtils.EMPTY_LIST, 0, 0, 0);
 
 		@Override
 		public PageResponse<?> get() {

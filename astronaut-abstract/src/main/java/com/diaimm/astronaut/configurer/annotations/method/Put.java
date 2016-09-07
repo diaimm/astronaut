@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Type;
 
+import org.springframework.http.HttpEntity;
 import org.springframework.util.concurrent.ListenableFuture;
 
 import com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker;
@@ -25,7 +26,11 @@ public @interface Put {
 		@Override
 		protected Object doInvoke(TypeHandlingRestOperations restTemplate, APICallInfoCompactizer<Put> compactizer, Type returnType, Put annotation)
 			throws Exception {
-			restTemplate.put(compactizer.getApiUrl(), null, compactizer.getArguments());
+			String apiUrl = compactizer.getApiUrl();
+			Object[] arguments = compactizer.getArguments();
+			Object postBody = compactizer.getPostBody();
+
+			restTemplate.put(apiUrl, postBody, arguments);
 			return true;
 		}
 
@@ -38,7 +43,10 @@ public @interface Put {
 		protected ListenableFuture<?> doInvoke(TypeHandlingAsyncRestOperations restTemplate,
 			com.diaimm.astronaut.configurer.AbstractRestTemplateInvoker.APICallInfoCompactizer<Put> compactizer, Type returnType, Put annotation)
 				throws Exception {
-			return restTemplate.put(compactizer.getApiUrl(), null, compactizer.getArguments());
+			String apiUrl = compactizer.getApiUrl();
+			Object[] arguments = compactizer.getArguments();
+			Object postBody = compactizer.getPostBody();
+			return restTemplate.put(apiUrl, new HttpEntity<>(postBody), arguments);
 		}
 	}
 }

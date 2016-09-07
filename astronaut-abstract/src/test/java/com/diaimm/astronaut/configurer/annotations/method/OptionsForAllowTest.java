@@ -20,15 +20,22 @@ import com.diaimm.astronaut.configurer.AnnotationUtilsExt;
 import com.diaimm.astronaut.configurer.RestTemplateAdapterTestConfiguration;
 import com.diaimm.astronaut.configurer.TypeHandlingAsyncRestOperations;
 import com.diaimm.astronaut.configurer.TypeHandlingRestOperations;
-import com.diaimm.astronaut.configurer.repositoriesToScan.methodtest.DeleteRepository;
+import com.diaimm.astronaut.configurer.annotations.method.OptionsForAllow.DummySupplierImpl;
 import com.diaimm.astronaut.configurer.repositoriesToScan.methodtest.OptionsForAllowRepository;
 import com.diaimm.astronaut.configurer.repositoriesToScan.methodtest.PathParamDTO;
+import com.google.common.collect.Sets;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = { RestTemplateAdapterTestConfiguration.class })
 public class OptionsForAllowTest {
 	@Autowired
 	private OptionsForAllowRepository optionsForAllowRepository;
+
+	@Test
+	public void dummySupplierImplTest() {
+		DummySupplierImpl target = new DummySupplierImpl();
+		Assert.assertEquals(Sets.<HttpMethod> newHashSet(), target.get());
+	}
 
 	@SuppressWarnings("unchecked")
 	@Test
@@ -49,7 +56,8 @@ public class OptionsForAllowTest {
 		Mockito.reset(restTemplate, compactizer);
 
 		TypeHandlingAsyncRestOperations restTemplate2 = Mockito.mock(TypeHandlingAsyncRestOperations.class);
-		Mockito.when(restTemplate2.optionsForAllow(Mockito.anyString(), (Object[]) Mockito.anyObject())).thenReturn(Mockito.mock(ListenableFuture.class));
+		Mockito.when(restTemplate2.optionsForAllow(Mockito.anyString(), (Object[]) Mockito.anyObject())).thenReturn(
+			Mockito.mock(ListenableFuture.class));
 		ListenableFuture<?> result = restTemplateInvoker.doInvoke((TypeHandlingAsyncRestOperations) restTemplate2, compactizer,
 			Mockito.mock(Type.class), optionsForAllow);
 
