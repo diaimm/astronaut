@@ -53,9 +53,13 @@ public class GetForObjectTest {
 		Assert.assertEquals(true, target.hasNextPage());
 		Assert.assertEquals(1, target.getPage());
 		
+		target.setSize(0);
+		Assert.assertEquals(1L, target.getTotalPages());
+		Assert.assertEquals(false, target.hasNextPage());
+		target.setSize(10);
+		
 		target.setPage(2l);
 		Assert.assertEquals(2, target.getPage());
-
 		Assert.assertEquals(10L, target.getSize());
 		
 		target.setSize(11);
