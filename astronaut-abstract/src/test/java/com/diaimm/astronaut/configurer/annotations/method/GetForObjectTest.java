@@ -48,6 +48,9 @@ public class GetForObjectTest {
 	public void PageResponseTest(){
 		List<String> orgContents = Lists.<String>newArrayList();
 		
+		PageResponse<String> target1 = new PageResponse<String>();
+		Assert.assertNull(target1.getContent());
+		
 		PageResponse<String> target = new PageResponse<String>(orgContents, 1, 10, 100);
 		Assert.assertEquals(10, target.getTotalPages());
 		Assert.assertEquals(true, target.hasNextPage());
