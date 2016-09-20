@@ -13,6 +13,7 @@ import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.util.concurrent.SuccessCallback;
 
 public class AsyncAPIResponseTest {
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testByPassCalls() throws InterruptedException, ExecutionException, TimeoutException {
 		ListenableFuture<ResponseEntity<String>> implicit = Mockito.mock(ListenableFuture.class);
@@ -36,6 +37,11 @@ public class AsyncAPIResponseTest {
 		Mockito.when(implicit.get(Mockito.anyLong(), (TimeUnit) Mockito.anyObject())).thenReturn(responseEntity);
 		response.get();
 		Mockito.verify(responseEntity).getBody();
+		Mockito.reset(responseEntity);
+		
+		Mockito.when(implicit.get(Mockito.anyLong(), (TimeUnit) Mockito.anyObject())).thenReturn(responseEntity);
+		response.get(Mockito.anyLong(), (TimeUnit)Mockito.anyObject());
+		Mockito.verify(implicit).get(Mockito.anyLong(), (TimeUnit)Mockito.anyObject());
 		Mockito.reset(responseEntity);
 
 		response.addCallback((ListenableFutureCallback<? super ResponseEntity<String>>) Mockito.anyObject());
