@@ -49,11 +49,44 @@ public class DefaultTypeHandlingAsyncRestTemplate extends AsyncRestTemplate impl
 			this.setTaskExecutor(new SimpleAsyncTaskExecutor());
 		}
 	}
+	
+	static class AsyncClientHttpRequestInvoker implements ClientHttpRequest {
+		private final AsyncClientHttpRequest request;
+
+		public AsyncClientHttpRequestInvoker(AsyncClientHttpRequest request) {
+			this.request = request;
+		}
+
+		@Override
+		public ClientHttpResponse execute() throws IOException {
+			throw new UnsupportedOperationException("execute not supported");
+		}
+
+		@Override
+		public OutputStream getBody() throws IOException {
+			return request.getBody();
+		}
+
+		@Override
+		public HttpMethod getMethod() {
+			return request.getMethod();
+		}
+
+		@Override
+		public URI getURI() {
+			return request.getURI();
+		}
+
+		@Override
+		public HttpHeaders getHeaders() {
+			return request.getHeaders();
+		}
+	}
+	
 	/**
 	 * Adapts a {@link RequestCallback} to the {@link AsyncRequestCallback} interface.
 	 */
-	private static class AsyncRequestCallbackAdapter implements AsyncRequestCallback {
-
+	static class AsyncRequestCallbackAdapter implements AsyncRequestCallback {
 		private final RequestCallback adaptee;
 
 		/**
@@ -66,34 +99,9 @@ public class DefaultTypeHandlingAsyncRestTemplate extends AsyncRestTemplate impl
 		}
 
 		@Override
-		public void doWithRequest(final AsyncClientHttpRequest request) throws IOException {
+		public void doWithRequest(AsyncClientHttpRequest request) throws IOException {
 			if (this.adaptee != null) {
-				this.adaptee.doWithRequest(new ClientHttpRequest() {
-					@Override
-					public ClientHttpResponse execute() throws IOException {
-						throw new UnsupportedOperationException("execute not supported");
-					}
-
-					@Override
-					public OutputStream getBody() throws IOException {
-						return request.getBody();
-					}
-
-					@Override
-					public HttpMethod getMethod() {
-						return request.getMethod();
-					}
-
-					@Override
-					public URI getURI() {
-						return request.getURI();
-					}
-
-					@Override
-					public HttpHeaders getHeaders() {
-						return request.getHeaders();
-					}
-				});
+				this.adaptee.doWithRequest(new AsyncClientHttpRequestInvoker(request));
 			}
 		}
 	}
