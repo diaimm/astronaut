@@ -35,12 +35,12 @@ public class RestTemplateAdapterTestConfiguration {
 	}
 
 	@Bean
-	public TypeHandlingRestOperations sampleRestTemplate() {
-		return new DefaultTypeHandlingRestTemplateImpl(300, 100, 100, 10, Lists.<Header> newArrayList());
+	public DefaultTypeHandlingRestTemplate sampleRestTemplate() {
+		return new DefaultTypeHandlingRestTemplate(300, 100, 100, 10, Lists.<Header> newArrayList());
 	}
 
 	@Bean
-	public TypeHandlingAsyncRestOperations sampleAsyncRestTemplate(TypeHandlingRestOperations sampleRestTemplate) {
+	public TypeHandlingAsyncRestOperations sampleAsyncRestTemplate(DefaultTypeHandlingRestTemplate sampleRestTemplate) {
 		return new DefaultTypeHandlingAsyncRestTemplate(sampleRestTemplate);
 	}
 }

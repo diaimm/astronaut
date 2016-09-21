@@ -22,8 +22,8 @@ import org.springframework.web.client.ResponseExtractor;
 import org.springframework.web.client.RestClientException;
 
 public class DefaultTypeHandlingAsyncRestTemplate extends AsyncRestTemplate implements TypeHandlingAsyncRestOperations {
-	public DefaultTypeHandlingAsyncRestTemplate(TypeHandlingRestOperations restTemplate) {
-		super(new SimpleClientHttpRequestFactoryWithSimpleAsyncTaskExecutor(), restTemplate.getRequestFactory());
+	public DefaultTypeHandlingAsyncRestTemplate(DefaultTypeHandlingRestTemplate restTemplate) {
+		super(new SimpleClientHttpRequestFactoryWithSimpleAsyncTaskExecutor(), restTemplate);
 	}
 
 	@Override

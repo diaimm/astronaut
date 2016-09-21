@@ -22,14 +22,14 @@ import org.springframework.web.client.RequestCallback;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-public class DefaultTypeHandlingRestTemplateImpl extends RestTemplate implements TypeHandlingRestOperations {
+public class DefaultTypeHandlingRestTemplate extends RestTemplate implements TypeHandlingRestOperations {
 	private final List<Header> defaultHeaders;
 	private final int connectTimeout;
 	private final int readTimeout;
 	private final int maxConnTotal;
 	private final int maxConnPerRoute;
 
-	public DefaultTypeHandlingRestTemplateImpl(int connectTimeout, int readTimeout, int maxConnTotal, int maxConnPerRoute,
+	public DefaultTypeHandlingRestTemplate(int connectTimeout, int readTimeout, int maxConnTotal, int maxConnPerRoute,
 		List<Header> defaultHeaders) {
 		super();
 		this.connectTimeout = connectTimeout;

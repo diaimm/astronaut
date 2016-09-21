@@ -15,7 +15,7 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.http.converter.xml.Jaxb2RootElementHttpMessageConverter;
 
 import com.diaimm.astronaut.configurer.DefaultTypeHandlingAsyncRestTemplate;
-import com.diaimm.astronaut.configurer.DefaultTypeHandlingRestTemplateImpl;
+import com.diaimm.astronaut.configurer.DefaultTypeHandlingRestTemplate;
 import com.diaimm.astronaut.configurer.RestTemplateAdapterLoader;
 import com.diaimm.astronaut.configurer.RestTemplateAdapterLoader.Version;
 import com.diaimm.astronaut.configurer.TypeHandlingAsyncRestOperations;
@@ -61,14 +61,14 @@ public class RestTemplateAdapterTestConfiguration {
 //		defaultHeaders.add(new BasicHeader("user-agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.82 Safari/537.36"));
 //		defaultHeaders.add(new BasicHeader("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"));
 
-		DefaultTypeHandlingRestTemplateImpl result = new DefaultTypeHandlingRestTemplateImpl(300, 5000, 100, 10, defaultHeaders);
+		DefaultTypeHandlingRestTemplate result = new DefaultTypeHandlingRestTemplate(300, 5000, 100, 10, defaultHeaders);
 		result.setMessageConverters(httpMessageConverters());
 
 		return result;
 	}
 	
 	@Bean
-	public TypeHandlingAsyncRestOperations sampleAsyncRestTemplate(TypeHandlingRestOperations sampleRestTemplate){
+	public TypeHandlingAsyncRestOperations sampleAsyncRestTemplate(DefaultTypeHandlingRestTemplate sampleRestTemplate){
 		return new DefaultTypeHandlingAsyncRestTemplate(sampleRestTemplate);
 	}
 
