@@ -203,7 +203,8 @@ public class DefaultTypeHandlingRestTemplate extends RestTemplate implements Typ
 				if (requestContentType != null) {
 					message += " and content type [" + requestContentType + "]";
 				}
-				throw new RestClientException(message);
+
+				return new RestClientException(message);
 			});
 			return messageConverter;
 		}
