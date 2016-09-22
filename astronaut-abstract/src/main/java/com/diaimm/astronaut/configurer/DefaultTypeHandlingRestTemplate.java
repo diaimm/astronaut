@@ -2,8 +2,9 @@ package com.diaimm.astronaut.configurer;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.http.Header;
 import org.apache.http.client.HttpClient;
@@ -81,50 +82,46 @@ public class DefaultTypeHandlingRestTemplate extends RestTemplate implements Typ
 		}
 
 		public void doWithRequest(ClientHttpRequest request) throws IOException {
-			if (responseType != null) {
-				Class<?> responseClass = null;
-				if (responseType instanceof Class) {
-					responseClass = (Class<?>) responseType;
-				}
-
-				List<MediaType> allSupportedMediaTypes = new ArrayList<MediaType>();
-				for (HttpMessageConverter<?> converter : getMessageConverters()) {
-					if (responseClass != null) {
-						if (converter.canRead(responseClass, null)) {
-							allSupportedMediaTypes.addAll(getSupportedMediaTypes(converter));
-						}
-
-						continue;
-					}
-
-					if (converter instanceof GenericHttpMessageConverter) {
-						GenericHttpMessageConverter<?> genericConverter = (GenericHttpMessageConverter<?>) converter;
-						if (genericConverter.canRead(responseType, null, null)) {
-							allSupportedMediaTypes.addAll(getSupportedMediaTypes(converter));
-						}
-					}
-
-				}
-				if (!allSupportedMediaTypes.isEmpty()) {
-					MediaType.sortBySpecificity(allSupportedMediaTypes);
-					if (logger.isDebugEnabled()) {
-						logger.debug("Setting request Accept header to " + allSupportedMediaTypes);
-					}
-					request.getHeaders().setAccept(allSupportedMediaTypes);
-				}
+			if (responseType == null) {
+				return;
 			}
+
+			Class<?> responseClass = getResponseClass();
+			List<MediaType> allSupportedMediaTypes = getMessageConverters().stream().filter(converter -> {
+				if (responseClass != null && converter.canRead(responseClass, null)) {
+					return true;
+				}
+
+				return converter instanceof GenericHttpMessageConverter;
+			}).flatMap(converter -> getSupportedMediaTypes(converter).stream()).collect(Collectors.toList());
+
+			if (allSupportedMediaTypes.isEmpty()) {
+				return;
+			}
+
+			MediaType.sortBySpecificity(allSupportedMediaTypes);
+			if (logger.isDebugEnabled()) {
+				logger.debug("Setting request Accept header to " + allSupportedMediaTypes);
+			}
+			request.getHeaders().setAccept(allSupportedMediaTypes);
+		}
+
+		private Class<?> getResponseClass() {
+			if (responseType instanceof Class) {
+				return (Class<?>) responseType;
+			}
+
+			return null;
 		}
 
 		private List<MediaType> getSupportedMediaTypes(HttpMessageConverter<?> messageConverter) {
-			List<MediaType> supportedMediaTypes = messageConverter.getSupportedMediaTypes();
-			List<MediaType> result = new ArrayList<MediaType>(supportedMediaTypes.size());
-			for (MediaType supportedMediaType : supportedMediaTypes) {
-				if (supportedMediaType.getCharSet() != null) {
-					supportedMediaType = new MediaType(supportedMediaType.getType(), supportedMediaType.getSubtype());
+			return messageConverter.getSupportedMediaTypes().stream().map(supportedMediaType -> {
+				if (supportedMediaType.getCharset() != null) {
+					return new MediaType(supportedMediaType.getType(), supportedMediaType.getSubtype());
 				}
-				result.add(supportedMediaType);
-			}
-			return result;
+
+				return supportedMediaType;
+			}).collect(Collectors.toList());
 		}
 	}
 
@@ -133,7 +130,6 @@ public class DefaultTypeHandlingRestTemplate extends RestTemplate implements Typ
 	 * request stream.
 	 */
 	private class HttpEntityRequestCallback extends AcceptHeaderRequestCallback {
-
 		private final HttpEntity<?> requestEntity;
 
 		private HttpEntityRequestCallback(Object requestBody) {
@@ -178,33 +174,38 @@ public class DefaultTypeHandlingRestTemplate extends RestTemplate implements Typ
 			Class<?> requestType = requestBody.getClass();
 			HttpHeaders requestHeaders = requestEntity.getHeaders();
 			MediaType requestContentType = requestHeaders.getContentType();
-			for (HttpMessageConverter<?> messageConverter : getMessageConverters()) {
-				if (!messageConverter.canWrite(requestType, requestContentType)) {
-					continue;
-				}
+			HttpMessageConverter<?> messageConverter = findMessageConverterForRequestBody(requestType, requestContentType);
 
-				if (!requestHeaders.isEmpty()) {
-					httpRequest.getHeaders().putAll(requestHeaders);
-				}
-
-				if (logger.isDebugEnabled()) {
-					if (requestContentType != null) {
-						logger.debug("Writing [" + requestBody + "] as \"" + requestContentType + "\" using [" + messageConverter + "]");
-					} else {
-						logger.debug("Writing [" + requestBody + "] using [" + messageConverter + "]");
-					}
-
-				}
-
-				((HttpMessageConverter<Object>) messageConverter).write(requestBody, requestContentType, httpRequest);
-				return;
+			if (!requestHeaders.isEmpty()) {
+				httpRequest.getHeaders().putAll(requestHeaders);
 			}
 
-			String message = "Could not write request: no suitable HttpMessageConverter found for request type [" + requestType.getName() + "]";
-			if (requestContentType != null) {
-				message += " and content type [" + requestContentType + "]";
+			if (logger.isDebugEnabled()) {
+				if (requestContentType != null) {
+					logger.debug("Writing [" + requestBody + "] as \"" + requestContentType + "\" using [" + messageConverter + "]");
+				} else {
+					logger.debug("Writing [" + requestBody + "] using [" + messageConverter + "]");
+				}
+
 			}
-			throw new RestClientException(message);
+
+			((HttpMessageConverter<Object>) messageConverter).write(requestBody, requestContentType, httpRequest);
+		}
+
+		private HttpMessageConverter<?> findMessageConverterForRequestBody(Class<?> requestType, MediaType requestContentType)
+			throws RestClientException {
+			Optional<HttpMessageConverter<?>> found = getMessageConverters().stream().filter(messageConverter -> {
+				return messageConverter.canWrite(requestType, requestContentType);
+			}).findFirst();
+
+			HttpMessageConverter<?> messageConverter = found.orElseThrow(() -> {
+				String message = "Could not write request: no suitable HttpMessageConverter found for request type [" + requestType.getName() + "]";
+				if (requestContentType != null) {
+					message += " and content type [" + requestContentType + "]";
+				}
+				throw new RestClientException(message);
+			});
+			return messageConverter;
 		}
 	}
 }
