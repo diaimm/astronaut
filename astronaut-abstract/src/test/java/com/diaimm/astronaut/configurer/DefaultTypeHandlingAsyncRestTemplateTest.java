@@ -38,8 +38,7 @@ public class DefaultTypeHandlingAsyncRestTemplateTest {
 		Assert.assertNotNull(forEntity);
 
 		ListenableFuture<ResponseEntity<Object>> forEntity2 = target.postForEntity("url", (HttpEntity<?>) Mockito.anyObject(),
-			(Type) Mockito.anyObject(),
-			new Object[0]);
+			(Type) Mockito.anyObject(), new Object[0]);
 		Assert.assertNotNull(forEntity2);
 	}
 
