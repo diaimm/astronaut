@@ -12,6 +12,9 @@ import java.lang.reflect.Method;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.ReflectionUtils;
 
+import com.diaimm.astronaut.configurer.AnnotationUtilsExt;
+import com.google.common.base.Optional;
+
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
@@ -62,11 +65,9 @@ public @interface Transaction {
 
 			private int findTargetParameterIndex(Annotation[][] parameterAnnotations) {
 				for (int parameterIndex = 0; parameterIndex < parameterAnnotations.length; parameterIndex++) {
-					Annotation[] annotationsOfAParameter = parameterAnnotations[parameterIndex];
-					for (Annotation annotaion : annotationsOfAParameter) {
-						if (annotaion instanceof TransactionId) {
-							return parameterIndex;
-						}
+					Optional<TransactionId> found = AnnotationUtilsExt.find(parameterAnnotations[parameterIndex], TransactionId.class);
+					if (found.isPresent()) {
+						return parameterIndex;
 					}
 				}
 
