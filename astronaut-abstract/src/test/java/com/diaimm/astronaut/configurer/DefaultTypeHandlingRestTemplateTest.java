@@ -29,7 +29,7 @@ public class DefaultTypeHandlingRestTemplateTest {
 		}
 
 		try {
-			target.postForObject("url", (HttpEntity<?>) Mockito.anyObject(), (Type) String.class, new Object[0]);
+			target.postForObject("url", Mockito.anyObject(), (Type) String.class, new Object[0]);
 		} catch (Exception e) {
 			Assert.assertEquals(ResourceAccessException.class, e.getClass());
 		}
