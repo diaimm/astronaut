@@ -21,10 +21,14 @@ import com.google.common.base.Optional;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface RequestURI {
-	public static class RequestURIExtractorsUtils {
+	static class RequestURIExtractorsUtils {
 		private static Logger logger = LoggerFactory.getLogger(RequestURI.class);
 
-		private static Optional<String> findRequestURIFromFields(Object instance) {
+		static Optional<String> findRequestURIFromFields(Object instance) {
+			if (instance == null) {
+				return Optional.absent();
+			}
+
 			Field[] declaredFields = instance.getClass().getDeclaredFields();
 			for (Field field : declaredFields) {
 				field.setAccessible(true);
@@ -49,7 +53,7 @@ public @interface RequestURI {
 			return Optional.absent();
 		}
 
-		private static Optional<String> findRequestURIFromMethod(Object instance) {
+		static Optional<String> findRequestURIFromMethod(Object instance) {
 			if (instance == null) {
 				return Optional.absent();
 			}
