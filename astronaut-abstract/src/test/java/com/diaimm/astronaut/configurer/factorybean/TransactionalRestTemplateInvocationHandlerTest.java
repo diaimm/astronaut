@@ -19,7 +19,7 @@ public class TransactionalRestTemplateInvocationHandlerTest {
 	public void invokeTest() throws Throwable {
 		RestTemplateTransactionManager transactionManager = Mockito.mock(RestTemplateTransactionManager.class);
 		RestTemplateRepositoryInvocationHandler invocationHandler = Mockito.mock(RestTemplateRepositoryInvocationHandler.class);
-		
+
 		Mockito.when(invocationHandler.getRestTemplate()).thenReturn(Mockito.mock(TypeHandlingRestOperations.class));
 
 		Method method = SampleClass.class.getDeclaredMethod("testMethod");
@@ -38,28 +38,53 @@ public class TransactionalRestTemplateInvocationHandlerTest {
 		Object result = handler.invoke(new Object(), method, args);
 		Assert.assertNotNull(result);
 		Assert.assertEquals(expected, result);
+		Mockito.reset(invocationHandler);
+		
+		// with transaction2
+		Mockito.when(transactionManager.getTransactionObject()).thenReturn(null);
+		Mockito.when(invocationHandler.invoke(Mockito.anyObject(), (Method) Mockito.anyObject(), (Object[]) Mockito.anyObject())).thenReturn(
+			result);
+		handler = new TransactionalRestTemplateInvocationHandler(invocationHandler, transactionManager);
+		result = handler.invoke(new Object(), method, args);
+		Assert.assertNotNull(result);
+		Assert.assertEquals(expected, result);
 
-		Mockito.verify(transactionObject, Mockito.timeout(1)).pushToCallStack((TransactionCommand) Mockito.anyObject(), (TransactionCommand) Mockito.anyObject());
-	
+		Mockito.verify(transactionObject, Mockito.timeout(1)).pushToCallStack((TransactionCommand) Mockito.anyObject(),
+			(TransactionCommand) Mockito.anyObject());
+		Mockito.reset(invocationHandler);
+
 		// no transaction
 		Mockito.when(transactionManager.getTransactionObject()).thenReturn(null);
+		Mockito.when(invocationHandler.invoke(Mockito.anyObject(), (Method) Mockito.anyObject(), (Object[]) Mockito.anyObject())).thenReturn(
+			result);
 		handler = new TransactionalRestTemplateInvocationHandler(invocationHandler, transactionManager);
 		result = handler.invoke(new Object(), method, args);
 		Assert.assertNotNull(result);
 		Assert.assertEquals(expected, result);
 		Mockito.verify(invocationHandler, Mockito.timeout(1)).getApiURLPrefix();
 		Mockito.reset(invocationHandler);
-		
-		try{
+
+		try {
 			// no transaction and an exception
-			Mockito.when(invocationHandler.invoke(Mockito.anyObject(), (Method) Mockito.anyObject(), (Object[]) Mockito.anyObject())).thenThrow(RuntimeException.class);
+			Mockito.when(invocationHandler.invoke(Mockito.anyObject(), (Method) Mockito.anyObject(), (Object[]) Mockito.anyObject())).thenThrow(
+				RuntimeException.class);
 			Mockito.when(transactionManager.getTransactionObject()).thenReturn(null);
 			handler = new TransactionalRestTemplateInvocationHandler(invocationHandler, transactionManager);
 			result = handler.invoke(new Object(), method, args);
 			Assert.fail();
-		} catch (RuntimeException e){
+		} catch (RuntimeException e) {
 			Assert.assertNotNull(e);
 			Mockito.verify(invocationHandler, Mockito.times(1)).getApiURLPrefix();
 		}
+
+		// no APIMapping annotated 
+		Method noAPIMapptingMethod = SampleClass2.class.getDeclaredMethod("sampleMethod");
+		noAPIMapptingMethod.setAccessible(true);
+		Assert.assertNull(new TransactionalRestTemplateInvocationHandler(invocationHandler, transactionManager).invoke(
+			new Object(), noAPIMapptingMethod, new Object[0]));
+	}
+
+	private static interface SampleClass2 {
+		public void sampleMethod();
 	}
 }
