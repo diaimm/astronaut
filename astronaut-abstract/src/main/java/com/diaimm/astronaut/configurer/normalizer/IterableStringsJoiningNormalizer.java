@@ -18,14 +18,14 @@ public abstract class IterableStringsJoiningNormalizer implements APIArgumentNor
 			return joinToString(getTrimmedIterable(Lists.newArrayList((Object[]) value)).iterator());
 		}
 
-		if (Iterable.class.isAssignableFrom(value.getClass()) || value.getClass().isArray()) {
+		if (Iterable.class.isAssignableFrom(value.getClass())) {
 			return joinToString(getTrimmedIterable(value).iterator());
 		}
 
 		if (Iterator.class.isAssignableFrom(value.getClass())) {
 			return joinToString(Iterators.transform((Iterator<?>) value, toTrimmedOrNull()));
 		}
-		
+
 		return value.toString();
 	}
 

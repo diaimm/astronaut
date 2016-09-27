@@ -24,6 +24,8 @@ public class IterableStringsJoiningNormalizerTest {
 		Assert.assertEquals("1_2_3", normalizer.normalize(values2));
 
 		Assert.assertEquals("1_2_3", normalizer.normalize(values2.iterator()));
+
+		Assert.assertEquals("Sample", normalizer.normalize("Sample"));
 	}
 
 	@Test
@@ -35,10 +37,10 @@ public class IterableStringsJoiningNormalizerTest {
 			}
 		};
 
-		String[] values1 = new String[] { " 1", null, "3 " };
+		String[] values1 = new String[] { " 1", null, "3 ", ""};
 		Assert.assertEquals("1_3", normalizer.normalize(values1));
 
-		List<String> values2 = Lists.newArrayList(" 1", null, "3 ");
+		List<String> values2 = Lists.newArrayList(" 1", null, "3 ", "");
 		Assert.assertEquals("1_3", normalizer.normalize(values2));
 
 		Assert.assertEquals("1_3", normalizer.normalize(values2.iterator()));
@@ -48,10 +50,10 @@ public class IterableStringsJoiningNormalizerTest {
 	public void CommanJoningNormalizerTest() {
 		CommanJoningNormalizer normalizer = new CommanJoningNormalizer();
 
-		String[] values1 = new String[] { " 1", null, "3 " };
+		String[] values1 = new String[] { " 1", null, "3 ", "" };
 		Assert.assertEquals("1,3", normalizer.normalize(values1));
 
-		List<String> values2 = Lists.newArrayList(" 1", null, "3 ");
+		List<String> values2 = Lists.newArrayList(" 1", null, "3 ", "");
 		Assert.assertEquals("1,3", normalizer.normalize(values2));
 
 		Assert.assertEquals("1,3", normalizer.normalize(values2.iterator()));
