@@ -58,36 +58,40 @@ public class RestTemplateAdapterLoader implements BeanFactoryPostProcessor {
 				try {
 					Resource[] resources = ((ResourcePatternResolver) this.getResourceLoader()).getResources(packageSearchPath);
 					for (Resource resource : resources) {
-						if (!resource.isReadable()) {
-							continue;
-						}
-
-						MetadataReader metadataReader = this.getMetadataReaderFactory().getMetadataReader(resource);
-						if (!isCandidateComponent(metadataReader)) {
-							continue;
-						}
-
-						ClassMetadata classMetadata = metadataReader.getClassMetadata();
-						Class<?> currentClass = Class.forName(classMetadata.getClassName());
-
-						BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.rootBeanDefinition(
-							RestTemplateAdapterFactoryBean.class.getName());
-						beanDefinitionBuilder.addConstructorArgValue(version);
-						beanDefinitionBuilder.addConstructorArgValue(apiURIPropertyKey);
-						beanDefinitionBuilder.addConstructorArgValue(restTemplateBeanName);
-						beanDefinitionBuilder.addConstructorArgValue(asyncRestTemplateBeanName);
-						beanDefinitionBuilder.addConstructorArgValue(currentClass);
-						beanDefinitionBuilder.addConstructorArgValue(transactionManger);
-
-						logger.debug("Identified candidate component class: " + resource);
-						AbstractBeanDefinition beanDefinition = beanDefinitionBuilder.getBeanDefinition();
-						defaultListableBeanFactory.registerBeanDefinition(currentClass.getName(), beanDefinition);
+						handleAResource(resource);
 					}
 				} catch (Exception e) {
 					throw new BeanCreationException("bean 생성 실패 ", e);
 				}
 
 				return Sets.newHashSet();
+			}
+
+			private void handleAResource(Resource resource) throws IOException, ClassNotFoundException {
+				if (!resource.isReadable()) {
+					return;
+				}
+
+				MetadataReader metadataReader = this.getMetadataReaderFactory().getMetadataReader(resource);
+				if (!isCandidateComponent(metadataReader)) {
+					return;
+				}
+
+				registerBeanDefinition(resource, Class.forName(metadataReader.getClassMetadata().getClassName()));
+			}
+
+			private void registerBeanDefinition(Resource resource, Class<?> currentClass) throws ClassNotFoundException {
+				BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.rootBeanDefinition(RestTemplateAdapterFactoryBean.class.getName());
+				beanDefinitionBuilder.addConstructorArgValue(version);
+				beanDefinitionBuilder.addConstructorArgValue(apiURIPropertyKey);
+				beanDefinitionBuilder.addConstructorArgValue(restTemplateBeanName);
+				beanDefinitionBuilder.addConstructorArgValue(asyncRestTemplateBeanName);
+				beanDefinitionBuilder.addConstructorArgValue(currentClass);
+				beanDefinitionBuilder.addConstructorArgValue(transactionManger);
+
+				logger.debug("Identified candidate component class: " + resource);
+				AbstractBeanDefinition beanDefinition = beanDefinitionBuilder.getBeanDefinition();
+				defaultListableBeanFactory.registerBeanDefinition(currentClass.getName(), beanDefinition);
 			}
 
 			protected boolean isCandidateComponent(MetadataReader metadataReader) throws IOException {

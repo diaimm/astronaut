@@ -11,10 +11,19 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpInputMessage;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpOutputMessage;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequest;
+import org.springframework.http.converter.AbstractHttpMessageConverter;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.web.client.RequestCallback;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.ResponseExtractor;
+import org.springframework.web.client.RestClientException;
 
 import com.google.common.collect.Lists;
 
@@ -33,6 +42,16 @@ public class DefaultTypeHandlingRestTemplateTest {
 		} catch (Exception e) {
 			Assert.assertEquals(ResourceAccessException.class, e.getClass());
 		}
+
+		DefaultTypeHandlingRestTemplate target2 = new DefaultTypeHandlingRestTemplate(300, 100, 100, 10, Lists.<Header> newArrayList()) {
+			@Override
+			public <T> T execute(String url, HttpMethod method, RequestCallback requestCallback,
+				ResponseExtractor<T> responseExtractor, Object... urlVariables) throws RestClientException {
+				return null;
+			}
+		};
+		Assert.assertNull(target2.getForObject("url", (Type) String.class, new Object[0]));
+		Assert.assertNull(target2.postForObject("url", "", (Type) String.class, new Object[0]));
 	}
 
 	@Test
