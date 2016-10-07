@@ -23,6 +23,10 @@ import com.google.common.base.Optional;
 public @interface RequestURI {
 	static class RequestURIExtractorsUtils {
 		private static Logger logger = LoggerFactory.getLogger(RequestURI.class);
+		
+		private RequestURIExtractorsUtils(){
+			throw new UnsupportedOperationException("initiation is not allowed");
+		}
 
 		static Optional<String> findRequestURIFromFields(Object instance) {
 			if (instance == null) {
@@ -65,7 +69,7 @@ public @interface RequestURI {
 
 				RequestURI requestUri = AnnotationUtilsExt.findAnnotation(method, RequestURI.class);
 				if (requestUri != null) {
-					if (Void.class.equals(method.getReturnType())) {
+					if (void.class.equals(method.getReturnType())) {
 						continue;
 					}
 
