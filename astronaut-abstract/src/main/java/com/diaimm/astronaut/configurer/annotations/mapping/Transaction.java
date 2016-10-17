@@ -33,15 +33,11 @@ public @interface Transaction {
 		RESPONSE {
 			@Override
 			public Object extractTransactionInfo(String transactionIdFieldName, Method method, Object[] args, Object result) {
-				try {
-					if (StringUtils.isBlank(transactionIdFieldName)) {
-						return result;
-					}
-
-					return getFieldValue(transactionIdFieldName, result);
-				} catch (Exception e) {
-					throw new IllegalStateException(e);
+				if (StringUtils.isBlank(transactionIdFieldName)) {
+					return result;
 				}
+
+				return getFieldValue(transactionIdFieldName, result);
 			}
 
 		},

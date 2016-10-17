@@ -39,6 +39,9 @@ public class TransactionTest {
 			request.extractTransactionInfo("sampleValue", SampleClass.class.getDeclaredMethod("sampleMethod2", SampleClass.class),
 				new Object[] { sampleClass }, sampleClass));
 
+		Assert.assertNull(request.extractTransactionInfo("sampleValue", SampleClass.class.getDeclaredMethod("sampleMethod3", SampleClass.class),
+				new Object[] { sampleClass }, sampleClass));
+
 	}
 
 	private static class SampleClass {
@@ -49,6 +52,10 @@ public class TransactionTest {
 		}
 
 		public void sampleMethod2(@TransactionId SampleClass requestBody) {
+
+		}
+
+		public void sampleMethod3(SampleClass requestBody) {
 
 		}
 	}
