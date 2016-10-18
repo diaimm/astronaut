@@ -32,8 +32,9 @@ class RestTemplateRepositoryInvocationHandler implements InvocationHandler {
 	private TypeHandlingAsyncRestOperations asyncRestTemplate;
 	private String apiURLPrefix;
 
-	RestTemplateRepositoryInvocationHandler(TypeHandlingRestOperations restTemplate, TypeHandlingAsyncRestOperations asyncRestTemplate, URI apiURI, String pathPrefix) {
-		this.apiURLPrefix = apiURI + pathPrefix;
+	RestTemplateRepositoryInvocationHandler(TypeHandlingRestOperations restTemplate, TypeHandlingAsyncRestOperations asyncRestTemplate, URI apiURI,
+		String pathPrefix) {
+		this.apiURLPrefix = pathPrefix + apiURI;
 		this.restTemplate = restTemplate;
 		this.asyncRestTemplate = asyncRestTemplate;
 	}
