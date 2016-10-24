@@ -54,10 +54,10 @@ public class RestTemplateRepositoryInvocationHandlerTest {
 			restTemplate = Mockito.mock(TypeHandlingRestOperations.class);
 		}
 		TypeHandlingAsyncRestOperations asyncRestTemplate = Mockito.mock(TypeHandlingAsyncRestOperations.class);
-		String apiURLPrefix = "http://this.is.url.prefix";
-		URI uri = new URI("/and/this/is/the/path");
+		String apiURLPathPrefix = "/and/this/is/the/path";
+		URI uri = new URI("http://this.is.url.prefix");
 		RestTemplateRepositoryInvocationHandler target = new RestTemplateRepositoryInvocationHandler(restTemplate, asyncRestTemplate, uri,
-			apiURLPrefix);
+			apiURLPathPrefix);
 		return target;
 	}
 
