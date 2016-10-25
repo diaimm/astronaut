@@ -23,19 +23,21 @@ import com.google.common.base.Optional;
 public @interface RequestURI {
 	static class RequestURIExtractorsUtils {
 		private static Logger logger = LoggerFactory.getLogger(RequestURI.class);
-		
-		private RequestURIExtractorsUtils(){
+
+		private RequestURIExtractorsUtils() {
 			throw new UnsupportedOperationException("initiation is not allowed");
 		}
 
-		static Optional<String> findRequestURIFromFields(Object instance) {
+		static Optional<String> findRequestURIFromFields(Object instance, boolean accessToField) {
 			if (instance == null) {
 				return Optional.absent();
 			}
 
 			Field[] declaredFields = instance.getClass().getDeclaredFields();
 			for (Field field : declaredFields) {
-				field.setAccessible(true);
+				if (accessToField) {
+					field.setAccessible(true);
+				}
 				if (field.isAnnotationPresent(RequestURI.class)) {
 					if (Void.class.equals(field.getType())) {
 						continue;
@@ -57,7 +59,7 @@ public @interface RequestURI {
 			return Optional.absent();
 		}
 
-		static Optional<String> findRequestURIFromMethod(Object instance) {
+		static Optional<String> findRequestURIFromMethod(Object instance, boolean accessUnexposedMethod) {
 			if (instance == null) {
 				return Optional.absent();
 			}
@@ -65,7 +67,9 @@ public @interface RequestURI {
 			Class<?> clazz = instance.getClass();
 			Method[] declaredMethods = clazz.getDeclaredMethods();
 			for (Method method : declaredMethods) {
-				method.setAccessible(true);
+				if (accessUnexposedMethod) {
+					method.setAccessible(true);
+				}
 
 				RequestURI requestUri = AnnotationUtilsExt.findAnnotation(method, RequestURI.class);
 				if (requestUri != null) {
@@ -90,10 +94,14 @@ public @interface RequestURI {
 	}
 
 	public static class RequestURIExtractors {
+		private RequestURIExtractors(){
+			throw new UnsupportedOperationException("initiation is not allowed");
+		}
+		
 		public static Function<Annotation, Optional<String>> fromAnnotation = new Function<Annotation, Optional<String>>() {
 			@Override
 			public Optional<String> apply(Annotation input) {
-				return RequestURIExtractorsUtils.findRequestURIFromMethod(input);
+				return RequestURIExtractorsUtils.findRequestURIFromMethod(input, true);
 			}
 		};
 
@@ -127,12 +135,12 @@ public @interface RequestURI {
 				}
 
 				Object requestParamArg = args[candidateIndex.get()];
-				Optional<String> fromFields = RequestURIExtractorsUtils.findRequestURIFromFields(requestParamArg);
+				Optional<String> fromFields = RequestURIExtractorsUtils.findRequestURIFromFields(requestParamArg, true);
 				if (fromFields.isPresent()) {
 					return fromFields;
 				}
 
-				return RequestURIExtractorsUtils.findRequestURIFromMethod(requestParamArg);
+				return RequestURIExtractorsUtils.findRequestURIFromMethod(requestParamArg, true);
 			}
 		};
 
