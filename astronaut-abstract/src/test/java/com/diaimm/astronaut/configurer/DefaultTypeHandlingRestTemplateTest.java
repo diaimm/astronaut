@@ -5,26 +5,23 @@ import java.lang.reflect.Type;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
 import org.apache.http.Header;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpInputMessage;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpOutputMessage;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequest;
-import org.springframework.http.converter.AbstractHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.web.client.RequestCallback;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.ResponseExtractor;
 import org.springframework.web.client.RestClientException;
 
+import com.diaimm.astronaut.configurer.DefaultTypeHandlingRestTemplate.HttpAccessorLogger;
 import com.google.common.collect.Lists;
 
 public class DefaultTypeHandlingRestTemplateTest {
@@ -82,6 +79,38 @@ public class DefaultTypeHandlingRestTemplateTest {
 		target.doWithRequest(request);
 
 		Mockito.verify(headers).setAccept((List<MediaType>) Mockito.anyList());
+
+		Mockito.reset(headers);
+		restTemplate.setMessageConverters(Lists.newArrayList(Mockito.mock(HttpMessageConverter.class)));
+		Mockito.verify(headers, Mockito.never()).setAccept((List<MediaType>) Mockito.anyList());
+	}
+
+	@Test
+	public void HttpAccessorLogger_Test() {
+		Log logger = Mockito.mock(Log.class);
+		HttpAccessorLogger accessorLogger = new HttpAccessorLogger(logger);
+
+		Mockito.when(logger.isDebugEnabled()).thenReturn(Boolean.TRUE);
+		List<MediaType> mediaTypes = Lists.newArrayList();
+		MediaType mediaType = Mockito.mock(MediaType.class);
+		String body = "test";
+		HttpMessageConverter httpMessageConverter = Mockito.mock(HttpMessageConverter.class);
+		accessorLogger.logIfNeed(mediaTypes);
+		accessorLogger.logIfNeed(body, mediaType, httpMessageConverter);
+
+		Mockito.verify(logger, Mockito.times(2)).debug(Mockito.anyString());
+
+		Mockito.reset(logger);
+		Mockito.when(logger.isDebugEnabled()).thenReturn(Boolean.TRUE);
+		accessorLogger.logIfNeed(mediaTypes);
+		accessorLogger.logIfNeed(body, null, httpMessageConverter);
+		Mockito.verify(logger, Mockito.times(2)).debug(Mockito.anyString());
+		
+		Mockito.reset(logger);
+		Mockito.when(logger.isDebugEnabled()).thenReturn(Boolean.FALSE);
+		accessorLogger.logIfNeed(mediaTypes);
+		accessorLogger.logIfNeed(body, null, httpMessageConverter);
+		Mockito.verify(logger, Mockito.never()).debug(Mockito.anyString());
 	}
 
 	private DefaultTypeHandlingRestTemplate createTarget() {

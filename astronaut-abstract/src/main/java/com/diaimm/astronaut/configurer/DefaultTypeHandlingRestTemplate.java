@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.commons.logging.Log;
 import org.apache.http.Header;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
@@ -29,6 +30,7 @@ public class DefaultTypeHandlingRestTemplate extends RestTemplate implements Typ
 	private final int readTimeout;
 	private final int maxConnTotal;
 	private final int maxConnPerRoute;
+	private HttpAccessorLogger accessorLogger = new HttpAccessorLogger(this.logger);
 
 	public DefaultTypeHandlingRestTemplate(int connectTimeout, int readTimeout, int maxConnTotal, int maxConnPerRoute,
 		List<Header> defaultHeaders) {
@@ -91,7 +93,6 @@ public class DefaultTypeHandlingRestTemplate extends RestTemplate implements Typ
 				if (responseClass != null && converter.canRead(responseClass, null)) {
 					return true;
 				}
-
 				return converter instanceof GenericHttpMessageConverter;
 			}).flatMap(converter -> getSupportedMediaTypes(converter).stream()).collect(Collectors.toList());
 
@@ -100,9 +101,7 @@ public class DefaultTypeHandlingRestTemplate extends RestTemplate implements Typ
 			}
 
 			MediaType.sortBySpecificity(allSupportedMediaTypes);
-			if (logger.isDebugEnabled()) {
-				logger.debug("Setting request Accept header to " + allSupportedMediaTypes);
-			}
+			accessorLogger.logIfNeed(allSupportedMediaTypes);
 			request.getHeaders().setAccept(allSupportedMediaTypes);
 		}
 
@@ -180,14 +179,7 @@ public class DefaultTypeHandlingRestTemplate extends RestTemplate implements Typ
 				httpRequest.getHeaders().putAll(requestHeaders);
 			}
 
-			if (logger.isDebugEnabled()) {
-				if (requestContentType != null) {
-					logger.debug("Writing [" + requestBody + "] as \"" + requestContentType + "\" using [" + messageConverter + "]");
-				} else {
-					logger.debug("Writing [" + requestBody + "] using [" + messageConverter + "]");
-				}
-
-			}
+			accessorLogger.logIfNeed(requestBody, requestContentType, messageConverter);
 
 			((HttpMessageConverter<Object>) messageConverter).write(requestBody, requestContentType, httpRequest);
 		}
@@ -207,6 +199,33 @@ public class DefaultTypeHandlingRestTemplate extends RestTemplate implements Typ
 				return new RestClientException(message);
 			});
 			return messageConverter;
+		}
+	}
+	static class HttpAccessorLogger {
+		private final Log logger;
+
+		HttpAccessorLogger(Log logger) {
+			this.logger = logger;
+		}
+
+		void logIfNeed(List<MediaType> allSupportedMediaTypes) {
+			if (!logger.isDebugEnabled()) {
+				return;
+			}
+			logger.debug("Setting request Accept header to " + allSupportedMediaTypes);
+		}
+
+		void logIfNeed(Object requestBody, MediaType requestContentType, HttpMessageConverter<?> messageConverter) {
+			if (!logger.isDebugEnabled()) {
+				return;
+			}
+
+			if (requestContentType != null) {
+				logger.debug("Writing [" + requestBody + "] as \"" + requestContentType + "\" using [" + messageConverter + "]");
+				return;
+			}
+
+			logger.debug("Writing [" + requestBody + "] using [" + messageConverter + "]");
 		}
 	}
 }
